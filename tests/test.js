@@ -17,10 +17,7 @@ describe('parser', function() {
     });
 
     it('should parse a multiline object with two structs', function() {
-      parse(
-  `<NAME "GUITAR"
-  VOLUME 11
-  >`  ).should.deepEqual({
+      parse(`<NAME "GUITAR"\n  VOLUME 11\n>`).should.deepEqual({
         type: 'NAME',
         lines: [
           {token: 'NAME',   params: ['GUITAR']},
@@ -34,8 +31,9 @@ describe('parser', function() {
     // To use a custom 'startRule', you must add it to the gen-debug npm script
     const parse = input => parser.parse(input, {startRule: 'int'});
 
-    it('should parse 0', function() { parse('0').should.deepEqual(0); })
-    it('should parse 100', function() { parse('100').should.deepEqual(100); })
+    it('should parse 0', function() { parse('0').should.deepEqual(0); });
+    it('should parse 100', function() { parse('100').should.deepEqual(100); });
+    it('should parse negative integers', function() { parse('-10').should.deepEqual(-10); });
   }) // Describe int rule
 
   describe('params rule', function() {
@@ -61,6 +59,29 @@ describe('parser', function() {
   describe('string rule', function() {
     // To use a custom 'startRule', you must add it to the gen-debug npm script
     const parse = input => parser.parse(input, {startRule: 'string'});
+
+    it('should parse double quoted strings', function() {
+      parse('"Okay this is a string"').should.equal('Okay this is a string')
+    });
+
+    it('should uandle unquoted strings (strings that do not start w/ a space, quote, or backtick)', () => {
+      parse('aString').should.equal('aString');
+      parse('hel"lo').should.equal('hel"lo');
+      parse('hello"').should.equal('hello"');
+    });
+
+    it('should handle non-alphanumeric characters', function() {
+      parse('"! ok"').should.equal('! ok');
+      parse('"ok !"').should.equal('ok !');
+      parse('!@#$%^&*()_+').should.equal('!@#$%^&*()_+');
+    });
+
+    it('should handle strings beginning with quotes', function() {
+      parse(`"''"`).should.equal(`''`);
+      parse(`'"'`).should.equal(`"`);
+      parse('"```"').should.equal('```');
+      parse('`"`').should.equal('"');
+    });
 
   }); // describe string rule
 }); // describe parse

@@ -4,12 +4,12 @@ Experimental file parser for the [Reaper](https://reaper.fm) Digital Audio Works
 
 Not ready for use.
 
-`
+```
 $ npm install rppp
 $ node
-`
-
 ```
+
+```JavaScript
 const rppp = require('rppp');
 const result = rppp.parse('<HI "there" 1>');
 const expect = {
@@ -21,3 +21,6 @@ const expect = {
 ```
 
 Recommended VS Code Plugin: [PEG.js Language by Futago-za Ryuu](https://marketplace.visualstudio.com/items?itemName=futagozaryuu.pegjs-syntax)
+
+
+The `npm test` script will compile the parser AND run the tests.
