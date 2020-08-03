@@ -1,0 +1,454 @@
+<REAPER_PROJECT 0.1 "6.13/OSX64" 1596487005
+  RIPPLE 0
+  GROUPOVERRIDE 0 0 0
+  AUTOXFADE 1
+  ENVATTACH 1
+  POOLEDENVATTACH 0
+  MIXERUIFLAGS 11 48
+  PEAKGAIN 1
+  FEEDBACK 0
+  PANLAW 1
+  PROJOFFS 0 0 0
+  MAXPROJLEN 0 600
+  GRID 3199 8 1 8 1 0 0 0
+  TIMEMODE 1 5 -1 30 0 0 -1
+  VIDEO_CONFIG 0 0 256
+  PANMODE 3
+  CURSOR 0
+  ZOOM 212.14003684571517 0 0
+  VZOOMEX 0 0
+  USE_REC_CFG 0
+  RECMODE 1
+  SMPTESYNC 0 30 100 40 1000 300 0 0 1 0 0
+  LOOP 0
+  LOOPGRAN 0 4
+  RECORD_PATH "" ""
+  <RECORD_CFG
+  >
+  <APPLYFX_CFG
+  >
+  RENDER_FILE ""
+  RENDER_PATTERN ""
+  RENDER_FMT 0 2 0
+  RENDER_1X 0
+  RENDER_RANGE 1 0 0 18 1000
+  RENDER_RESAMPLE 3 0 1
+  RENDER_ADDTOPROJ 0
+  RENDER_STEMS 0
+  RENDER_DITHER 0
+  TIMELOCKMODE 1
+  TEMPOENVLOCKMODE 1
+  ITEMMIX 0
+  DEFPITCHMODE 589824 0
+  TAKELANE 1
+  SAMPLERATE 44100 0 0
+  <RENDER_CFG
+  >
+  LOCK 1
+  <METRONOME 6 2
+    VOL 0.25 0.125
+    FREQ 800 1600 1
+    BEATLEN 4
+    SAMPLES "" ""
+    PATTERN 2863311530 2863311529
+  >
+  GLOBAL_AUTO -1
+  TEMPO 120 4 4
+  PLAYRATE 1 0 0.25 4
+  SELECTION 0 0
+  SELECTION2 0 0
+  MASTERAUTOMODE 0
+  MASTERTRACKHEIGHT 0 0
+  MASTERPEAKCOL 16576
+  MASTERMUTESOLO 0
+  MASTERTRACKVIEW 0 0.6667 0.5 0.5 0 0 0 0 0 0
+  MASTERHWOUT 0 0 1 0 0 0 0 -1
+  MASTER_NCH 2 2
+  MASTER_VOLUME 1 0 -1 -1 1
+  MASTER_FX 1
+  MASTER_SEL 0
+  <MASTERPLAYSPEEDENV
+    EGUID {1129F192-1F81-CA4A-8A90-3307E37AC58C}
+    ACT 0 -1
+    VIS 0 1 1
+    LANEHEIGHT 0 0
+    ARM 0
+    DEFSHAPE 0 -1 -1
+  >
+  <TEMPOENVEX
+    EGUID {97558381-F3FA-1846-8EE1-EBB08B400FE3}
+    ACT 0 -1
+    VIS 1 0 1
+    LANEHEIGHT 0 0
+    ARM 0
+    DEFSHAPE 1 -1 -1
+  >
+  <PROJBAY
+  >
+  <TRACK {99190200-DA06-8344-8F01-B9ADFF703604}
+    NAME ""
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 195 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {99190200-DA06-8344-8F01-B9ADFF703604}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+    <ITEM
+      POSITION 0
+      SNAPOFFS 0
+      LENGTH 2
+      LOOP 1
+      ALLTAKES 0
+      FADEIN 1 0 0 1 0 0
+      FADEOUT 1 0 0 1 0 0
+      MUTE 0 0
+      SEL 1
+      IGUID {35205688-D3DB-604A-A5B2-3F622BC2843B}
+      IID 3
+      <NOTES
+        |By default, RPP strings are surrounded by “double quotes”
+        |
+        |If the strings CONTAINS “ characters, then it will be surrounded by ‘single quotes’, or `back ticks`. 
+        |
+        |If the string contains double quotes, back ticks, and single quotes, then that string can still be represented  with a block
+        |    NAME `''''''"""`
+        |    <NAME
+        |      |'''```"""
+        |    >
+        |When this happens, the string must be encoded in both formats for backwards compatibility. 
+        |
+        |Study how the track names in this session are encoded for details
+      >
+      IMGRESOURCEFLAGS 0
+    >
+    <ITEM
+      POSITION 2.5
+      SNAPOFFS 0
+      LENGTH 2
+      LOOP 1
+      ALLTAKES 0
+      FADEIN 1 0 0 1 0 0
+      FADEOUT 1 0 0 1 0 0
+      MUTE 0 0
+      SEL 0
+      IGUID {A15F3699-0D57-0D4D-81D8-E1115086F7D2}
+      IID 2
+      <NOTES
+        || This line begins and ends with a pipe character |
+        |Empty Items store their strings beginning with a Pipe
+      >
+      IMGRESOURCEFLAGS 0
+    >
+    <ITEM
+      POSITION 5
+      SNAPOFFS 0
+      LENGTH 2
+      LOOP 1
+      ALLTAKES 0
+      FADEIN 1 0 0 1 0 0
+      FADEOUT 1 0 0 1 0 0
+      MUTE 0 0
+      SEL 0
+      IGUID {5DEF4FF2-AAF6-094C-9825-767AAD2ECFD9}
+      IID 1
+      <NOTES
+        |This is a very long string that is definitely longer than 128 characters. See how it wraps. Base64 chunks like the ones that save VST state always wrap after 128 characters.  How will this one?
+      >
+      IMGRESOURCEFLAGS 0
+    >
+  >
+  <TRACK {5AEB600F-5DCD-6A48-B296-3747B3603A42}
+    NAME '"'
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 25 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {5AEB600F-5DCD-6A48-B296-3747B3603A42}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {77E9794E-8CEB-DD42-9575-D1DA692CC1D1}
+    NAME '""'
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {77E9794E-8CEB-DD42-9575-D1DA692CC1D1}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {B2A9D5FA-AD4A-464B-9006-0462D6F5F0E9}
+    NAME '"""'
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {B2A9D5FA-AD4A-464B-9006-0462D6F5F0E9}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {71C3BF86-027C-F04A-BB05-F63AC17E7BBF}
+    NAME "'"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {71C3BF86-027C-F04A-BB05-F63AC17E7BBF}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {6294F25E-AA15-5045-AD68-059C614D6FE5}
+    NAME "''"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {6294F25E-AA15-5045-AD68-059C614D6FE5}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {5C0F2175-F13C-5541-9632-FCDD35390786}
+    NAME "'''"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {5C0F2175-F13C-5541-9632-FCDD35390786}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {5775C251-EC03-C340-A9CE-5F680558849A}
+    NAME "`"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {5775C251-EC03-C340-A9CE-5F680558849A}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {898BB118-03BC-D448-B60A-58966E2ADC14}
+    NAME "``"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {898BB118-03BC-D448-B60A-58966E2ADC14}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {41DED94E-BF51-0945-978E-6BF60F6E1C11}
+    NAME "```"
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {41DED94E-BF51-0945-978E-6BF60F6E1C11}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {B8EC7913-BACB-7546-A15D-F2F5796F1CAA}
+    NAME `''''''"""`
+    <NAME
+      |'''```"""
+    >
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 25 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {B8EC7913-BACB-7546-A15D-F2F5796F1CAA}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+  <TRACK {F4CF7998-8A7F-4E4F-AC29-2F41896EB043}
+    NAME NAME
+    PEAKCOL 16576
+    BEAT -1
+    AUTOMODE 0
+    VOLPAN 1 0 -1 -1 1
+    MUTESOLO 0 0 0
+    IPHASE 0
+    PLAYOFFS 0 1
+    ISBUS 0 0
+    BUSCOMP 0 0 0 0 0
+    SHOWINMIX 1 0.6667 0.5 1 0.5 0 0 0
+    FREEMODE 0
+    SEL 0
+    REC 0 0 1 0 0 0 0
+    VU 2
+    TRACKHEIGHT 0 0 0
+    INQ 0 0 0 0.5 100 0 0 100
+    NCHAN 2
+    FX 1
+    TRACKID {F4CF7998-8A7F-4E4F-AC29-2F41896EB043}
+    PERF 0
+    MIDIOUT -1
+    MAINSEND 1 0
+  >
+>

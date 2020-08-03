@@ -1,0 +1,22 @@
+{
+  "name": "rppp",
+  "version": "0.0.1",
+  "description": "Reaper .RPP Parser",
+  "main": "src/parser.js",
+  "scripts": {
+    "test": "npm run gen && mocha ./tests",
+    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,int,param,params pegjs/initial.pegjs",
+    "gen-release": "pegjs -o src/parser.js pegjs/initial.pegjs",
+    "gen": "npm run gen-debug; npm run gen-release;",
+    "prepublish": "npm gen"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "mocha": "^8.1.0",
+    "should": "^13.2.3"
+  },
+  "dependencies": {
+    "pegjs": "^0.10.0"
+  }
+}
