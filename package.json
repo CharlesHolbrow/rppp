@@ -14,9 +14,8 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "mocha": "^8.1.0",
+    "pegjs": "^0.10.0",
     "should": "^13.2.3"
   },
-  "dependencies": {
-    "pegjs": "^0.10.0"
-  }
+  "dependencies": {}
 }
