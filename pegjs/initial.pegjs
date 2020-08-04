@@ -8,8 +8,9 @@ Objects look like this
 ```
 Objects always have at least one struct (`<>` is not valid)
 */
-object = start lines:struct+ end {
-  return { type: lines[0].token, lines };
+object = start header: struct lines:(struct/object)* end {
+  lines.unshift(header);
+  return { type: header.token, lines };
 }
 
 
@@ -59,5 +60,5 @@ digit   = [0-9]
 space   = " "
 white   = space / "\t"
 start   = white* "<"
-end     = ">" white* crlf?
+end     = white* ">" white* crlf?
 crlf    = "\n"
