@@ -5,7 +5,7 @@
   "main": "src/parser.js",
   "scripts": {
     "test": "npm run gen && mocha ./tests",
-    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,int,param,params pegjs/initial.pegjs",
+    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params pegjs/initial.pegjs",
     "gen-release": "pegjs -o src/parser.js pegjs/initial.pegjs",
     "gen": "npm run gen-debug; npm run gen-release;",
     "prepublish": "npm run gen"

@@ -25,6 +25,33 @@ describe('parser', function() {
         ],
       });
     });
+
+    it('should parse a multiline object with two structs and indents', function() {
+      parse(`  <NAME "GUITAR"\n    VOLUME 11\n  >`).should.deepEqual({
+        type: 'NAME',
+        lines: [
+          {token: 'NAME',   params: ['GUITAR']},
+          {token: 'VOLUME', params: [11]},
+        ],
+      });
+    });
+
+    it('should parse a multiline object with two structs and an object', function() {
+      parse(`<NAME "GUITAR"\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`).should.deepEqual({
+        type: 'NAME',
+        lines: [
+          {token: 'NAME',   params: ['GUITAR']},
+          {token: 'VOLUME', params: [11]},
+          {
+            type: 'METRONOME',
+            lines: [
+              {token: 'METRONOME', params: [6, 2]},
+              {token: 'VOL', params: [0.25, 0.125]},
+            ]
+          }
+        ],
+      });
+    });
   }); // Describe object Rule
 
   describe('int rule', function() {
@@ -34,6 +61,16 @@ describe('parser', function() {
     it('should parse 0', function() { parse('0').should.deepEqual(0); });
     it('should parse 100', function() { parse('100').should.deepEqual(100); });
     it('should parse negative integers', function() { parse('-10').should.deepEqual(-10); });
+  }) // Describe int rule
+
+  describe('decimal rule', function() {
+    // To use a custom 'startRule', you must add it to the gen-debug npm script
+    const parse = input => parser.parse(input, {startRule: 'decimal'});
+
+    it('should parse 0.0', function() { parse('0.0').should.deepEqual(0); });
+    it('should parse 0.5', function() { parse('0.5').should.deepEqual(0.5); });
+    it('should parse 100.555', function() { parse('100.555').should.deepEqual(100.555); });
+    it('should parse negative integers', function() { parse('-10.1234').should.deepEqual(-10.1234); });
   }) // Describe int rule
 
   describe('params rule', function() {
