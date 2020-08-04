@@ -32,7 +32,7 @@ Parameters are everything after the token.
 `<REAPER_PROJECT 0.1 "6.13/OSX64" 1596463823`
 This rule expects every param to be preceeded by a space
 */
-param  "param"  = space p:(string / int) { return p; }
+param  "param"  = space p:(decimal / int / string) { return p; }
 params "params" = param*
 
 
@@ -42,14 +42,22 @@ See `rpp-examples/tricky-strings.RPP` for other examples of strings.
 
 TODO: Handle other strings types
 */
-string "string" = '"' chars:char* '"' { return chars.join(''); }
-char            = [a-z 0-9]i
+string "string" = '"' chars:char_nodq* '"' { return chars.join(''); } / bt_string
+bt_string       = '`' chars:char_nobt* '`' { return chars.join(''); } / sq_string
+sq_string       = "'" chars:char_nosq* "'" { return chars.join(''); } / nq_string
+nq_string       = chars:char_nosp* { return chars.join(''); } 
+
+char_nodq       = [a-z 0-9!@#$%^&*()_+'`-]i
+char_nobt       = [a-z 0-9!@#$%^&*()_+"'-]i
+char_nosq       = [a-z 0-9!@#$%^&*()_+"`-]i
+char_nosp       = [a-z0-9!@#$%^&*()_+"'`-]i
 
 /* */
-int   = txt:$("0" / ([1-9] digit*)) { return parseInt(txt); }
-digit = [0-9]
-space = " "
-white = space / "\t"
-start = white* "<"
-end   = ">" white* crlf?
-crlf  = "\n"
+decimal = txt:$(int "." digit*) { return parseFloat(txt); }
+int     = txt:$("0" / ("-"? [1-9] digit*)) { return parseInt(txt); }
+digit   = [0-9]
+space   = " "
+white   = space / "\t"
+start   = white* "<"
+end     = ">" white* crlf?
+crlf    = "\n"
