@@ -26,6 +26,16 @@ describe('parser', function() {
       });
     });
 
+    it('should parse a multiline object with two structs and indents', function() {
+      parse(`  <NAME "GUITAR"\n    VOLUME 11\n  >`).should.deepEqual({
+        type: 'NAME',
+        lines: [
+          {token: 'NAME',   params: ['GUITAR']},
+          {token: 'VOLUME', params: [11]},
+        ],
+      });
+    });
+
     it('should parse a multiline object with two structs and an object', function() {
       parse(`<NAME "GUITAR"\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`).should.deepEqual({
         type: 'NAME',
