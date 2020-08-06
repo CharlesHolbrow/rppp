@@ -11,16 +11,17 @@ describe('parser', function() {
     // TODO: Check if reaper ever puts objects one line
     it('should parse a one line object', function() {
       parse('<TEST 1\n>').should.deepEqual({
-        type: 'TEST',
-        lines: [{ token: 'TEST', params: [1] }],
+        token: 'TEST',
+        params: [1],
+        contents: [],
       });
     });
 
     it('should parse a multiline object with two structs', function() {
       parse(`<NAME "GUITAR"\n  VOLUME 11\n>`).should.deepEqual({
-        type: 'NAME',
-        lines: [
-          {token: 'NAME',   params: ['GUITAR']},
+        token: 'NAME',
+        params: ['GUITAR'],
+        contents: [
           {token: 'VOLUME', params: [11]},
         ],
       });
@@ -28,9 +29,9 @@ describe('parser', function() {
 
     it('should parse a multiline object with two structs and indents', function() {
       parse(`  <NAME "GUITAR"\n    VOLUME 11\n  >`).should.deepEqual({
-        type: 'NAME',
-        lines: [
-          {token: 'NAME',   params: ['GUITAR']},
+        token: 'NAME',
+        params: ['GUITAR'],
+        contents: [
           {token: 'VOLUME', params: [11]},
         ],
       });
@@ -38,14 +39,14 @@ describe('parser', function() {
 
     it('should parse a multiline object with two structs and an object', function() {
       parse(`<NAME "GUITAR"\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`).should.deepEqual({
-        type: 'NAME',
-        lines: [
-          {token: 'NAME',   params: ['GUITAR']},
+        token: 'NAME',
+        params: ['GUITAR'],
+        contents: [
           {token: 'VOLUME', params: [11]},
           {
-            type: 'METRONOME',
-            lines: [
-              {token: 'METRONOME', params: [6, 2]},
+            token: 'METRONOME',
+            params: [6, 2],
+            contents: [
               {token: 'VOL', params: [0.25, 0.125]},
             ]
           }
@@ -69,9 +70,9 @@ describe('parser', function() {
 
     it('should parse 0.0', function() { parse('0.0').should.deepEqual(0); });
     it('should parse 0.5', function() { parse('0.5').should.deepEqual(0.5); });
-    it('should parse 100.555', function() { parse('100.555').should.deepEqual(100.555); });
+    it('should parse 101.555', function() { parse('101.555').should.deepEqual(101.555); });
     it('should parse negative integers', function() { parse('-10.1234').should.deepEqual(-10.1234); });
-  }) // Describe int rule
+  }) // Describe decimal rule
 
   describe('params rule', function() {
     // To use a custom 'startRule', you must add it to the gen-debug npm script
@@ -91,6 +92,11 @@ describe('parser', function() {
     it(`should parse "${t03}" as a string and three ints`, function() {
       parse(t03).should.deepEqual(['ok', 1, 2, 3]);
     });
+
+    const t04 = ' "" 1234{}';
+    it(`should parse "${t04}" as an empty string and a string that starts with an integer`, function() {
+      parse(t04).should.deepEqual(['', '1234{}']);
+    });
   }); // describe params
 
   describe('string rule', function() {
@@ -98,7 +104,8 @@ describe('parser', function() {
     const parse = input => parser.parse(input, {startRule: 'string'});
 
     it('should parse double quoted strings', function() {
-      parse('"Okay this is a string"').should.equal('Okay this is a string')
+      parse('"Okay this is a string"').should.equal('Okay this is a string');
+      parse('""').should.equal('');
     });
 
     it('should uandle unquoted strings (strings that do not start w/ a space, quote, or backtick)', () => {
@@ -121,4 +128,67 @@ describe('parser', function() {
     });
 
   }); // describe string rule
+
+
+  describe('multiline parameters', function() {
+    // To use a custom 'startRule', you must add it to the gen-debug npm script
+    const parse = input => parser.parse(input, {startRule: 'object'});
+
+    it('should parse NOTES objects', function() {
+      parse('<NOTES\n  || Line one with extra pipes |\n  | Second Line\n>').should.deepEqual({
+        token: 'NOTES',
+        params: ['| Line one with extra pipes |\n Second Line'],
+        contents: [],
+      })
+    });
+
+    it('should parse strings that start with a string delimiter and contain all delimiters', () => {
+      parse(`<NAME \`''''''"""\`\n  <NAME\n    |'''\`\`\`"""\n  >\n>`).should.deepEqual({
+        token: 'NAME',
+        params: [`'''\`\`\`"""`,],
+        contents: [],
+      });
+    });
+
+    it('should parse VSTs/Plugins containing Base64', function() {
+      parse(`<VST "VST3: #TStereo Delay (Tracktion)" "#TStereo Delay.vst3" 0 "" 1997878177{5653545344656C237473746572656F20} ""
+  oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA
+  AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0A
+  AQRwbHVnaW5JRAABDwVUU3RlcmVvIERlbGF5AHByb2dyYW1EaXJ0eQABAQNjdXJyZW50UHJvZ3JhbQABEQVGYWN0b3J5IERlZmF1bHQAcHJvZ3JhbUlEAAABF1BBUkFN
+  AAECaWQAAQsFZGVsYXlzeW5jAHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQcFZHJ5ZGIAdmFsdWUAAQkEAAAAAAAARMAAUEFSQU0AAQJpZAABCAVlbmFibGUA
+  dmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABBwVpbnB1dAB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEQBWxjcm9zc2ZlZWRiYWNrAHZhbHVlAAEJBAAA
+  AAAAAAAAAFBBUkFNAAECaWQAAQoFbGRlbGF5bXMAdmFsdWUAAQkEAAAAAABAf0AAUEFSQU0AAQJpZAABDAVsZGVsYXlub3RlAHZhbHVlAAEJBAAAAAAAAAhAAFBBUkFN
+  AAECaWQAAQ4FbGRlbGF5b2Zmc2V0AHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQsFbGZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAD5AAFBBUkFNAAECaWQAAQoF
+  bGhpZ2hjdXQAdmFsdWUAAQkEAAAAAACI00AAUEFSQU0AAQJpZAABCQVsbG93Y3V0AHZhbHVlAAEJBAAAAAAAADRAAFBBUkFNAAECaWQAAQYFbHBhbgB2YWx1ZQABCQQA
+  AAAAAADwvwBQQVJBTQABAmlkAAEJBWxzb3VyY2UAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABEAVyY3Jvc3NmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAAAAABQ
+  QVJBTQABAmlkAAEKBXJkZWxheW1zAHZhbHVlAAEJBAAAAAAAQH9AAFBBUkFNAAECaWQAAQwFcmRlbGF5bm90ZQB2YWx1ZQABCQQAAAAAAAAIQABQQVJBTQABAmlkAAEO
+  BXJkZWxheW9mZnNldAB2YWx1ZQABCQQAAAAAAADwPwBQQVJBTQABAmlkAAELBXJmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAA+QABQQVJBTQABAmlkAAEKBXJoaWdoY3V0
+  AHZhbHVlAAEJBAAAAAAAiNNAAFBBUkFNAAECaWQAAQkFcmxvd2N1dAB2YWx1ZQABCQQAAAAAAAA0QABQQVJBTQABAmlkAAEGBXJwYW4AdmFsdWUAAQkEAAAAAAAA8D8A
+  UEFSQU0AAQJpZAABCQVyc291cmNlAHZhbHVlAAEJBAAAAAAAAABAAFBBUkFNAAECaWQAAQcFd2V0ZGIAdmFsdWUAAQkEAAAAAAAAJMAAAAAAAAAAAABKVUNFUHJpdmF0
+  ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=
+  AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=
+>`).should.deepEqual({
+        token: 'VST',
+        params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
+          `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA
+  AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0A
+  AQRwbHVnaW5JRAABDwVUU3RlcmVvIERlbGF5AHByb2dyYW1EaXJ0eQABAQNjdXJyZW50UHJvZ3JhbQABEQVGYWN0b3J5IERlZmF1bHQAcHJvZ3JhbUlEAAABF1BBUkFN
+  AAECaWQAAQsFZGVsYXlzeW5jAHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQcFZHJ5ZGIAdmFsdWUAAQkEAAAAAAAARMAAUEFSQU0AAQJpZAABCAVlbmFibGUA
+  dmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABBwVpbnB1dAB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEQBWxjcm9zc2ZlZWRiYWNrAHZhbHVlAAEJBAAA
+  AAAAAAAAAFBBUkFNAAECaWQAAQoFbGRlbGF5bXMAdmFsdWUAAQkEAAAAAABAf0AAUEFSQU0AAQJpZAABDAVsZGVsYXlub3RlAHZhbHVlAAEJBAAAAAAAAAhAAFBBUkFN
+  AAECaWQAAQ4FbGRlbGF5b2Zmc2V0AHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQsFbGZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAD5AAFBBUkFNAAECaWQAAQoF
+  bGhpZ2hjdXQAdmFsdWUAAQkEAAAAAACI00AAUEFSQU0AAQJpZAABCQVsbG93Y3V0AHZhbHVlAAEJBAAAAAAAADRAAFBBUkFNAAECaWQAAQYFbHBhbgB2YWx1ZQABCQQA
+  AAAAAADwvwBQQVJBTQABAmlkAAEJBWxzb3VyY2UAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABEAVyY3Jvc3NmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAAAAABQ
+  QVJBTQABAmlkAAEKBXJkZWxheW1zAHZhbHVlAAEJBAAAAAAAQH9AAFBBUkFNAAECaWQAAQwFcmRlbGF5bm90ZQB2YWx1ZQABCQQAAAAAAAAIQABQQVJBTQABAmlkAAEO
+  BXJkZWxheW9mZnNldAB2YWx1ZQABCQQAAAAAAADwPwBQQVJBTQABAmlkAAELBXJmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAA+QABQQVJBTQABAmlkAAEKBXJoaWdoY3V0
+  AHZhbHVlAAEJBAAAAAAAiNNAAFBBUkFNAAECaWQAAQkFcmxvd2N1dAB2YWx1ZQABCQQAAAAAAAA0QABQQVJBTQABAmlkAAEGBXJwYW4AdmFsdWUAAQkEAAAAAAAA8D8A
+  UEFSQU0AAQJpZAABCQVyc291cmNlAHZhbHVlAAEJBAAAAAAAAABAAFBBUkFNAAECaWQAAQcFd2V0ZGIAdmFsdWUAAQkEAAAAAAAAJMAAAAAAAAAAAABKVUNFUHJpdmF0
+  ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=
+  AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=`],
+        contents: [],
+      });
+    });
+  }); // describe multiline parameters rule
 }); // describe parse
