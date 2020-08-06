@@ -2,7 +2,7 @@
   "name": "rppp",
   "version": "0.0.3",
   "description": "Reaper .RPP Parser",
-  "main": "src/parser.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "npm run gen && mocha ./tests",
     "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params pegjs/initial.pegjs",
