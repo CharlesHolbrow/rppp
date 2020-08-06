@@ -43,7 +43,7 @@ Parsing for special tokens
 */
 special_token = VST / NOTES
 VST = "VST" params: params crlf white* base64data: multiline_string { 
-  params.push(base64data)
+  params.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
   return { token: "VST", params } 
 }
 NOTES = "NOTES" crlf note: pi_string { return { token: "NOTES", params: [ note ]} }
@@ -59,7 +59,8 @@ params "params" = param*
 /*
 Some parameters span multiple lines
 */
-multiline_string = lines: line* { return lines.join('\n') }
+whiteline = white* line: line {return line}
+multiline_string = lines: whiteline* { return lines }
 
 /*
 Supports strings that start with ", ' and `. 
