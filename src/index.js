@@ -1,7 +1,7 @@
 const parser = require("./parser")
-const serializer = require("./serializer")
+const Serializers = require("./serializer")
 
 module.exports = {
     parse: parser.parse,
-    serializer: serializer,
+    serializers: Serializers,
 };

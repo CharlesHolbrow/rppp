@@ -1,3 +1,10 @@
+{
+  const Serializers = require('./serializer.js')
+  const Base = Serializers.BaseSerializer
+  const Vst = Serializers.VstSerializer
+  const Notes = Serializers.NotesSerializer
+}
+
 /*
 Objects look like this
 ```
@@ -8,20 +15,14 @@ Objects look like this
 ```
 Objects always have at least one struct (`<>` is not valid)
 */
-object = start header: struct lines:(struct/object)* end {
-  return { token: header.token, params: header.params, contents: lines };
-}
-
+object =  (start obj: special_object end {return obj} ) / (start header: struct lines:(struct/object)* end {
+  return new Base({ token: header.token, params: header.params, contents: lines });
+})
 
 /*
 Tokens that require special parsing, e.g. VST, NOTES
 */
-struct = (white* s:special_token { return s; } ) 
-
-/* 
-Strings which contain all 3 delimiters
-*/
-/ (white* token:token params:params crlf start token crlf pipe_string: pi_string end { 
+struct = (white* token:token params:params crlf start token crlf pipe_string: pi_string end { 
   params[0] = pipe_string; 
   return {token, params};
 })
@@ -41,12 +42,12 @@ token "token" = chars:[A-Z_]+ { return chars.join(''); }
 /*
 Parsing for special tokens
 */
-special_token = VST / NOTES
+special_object = VST / NOTES
 VST = "VST" params: params crlf white* base64data: multiline_string { 
   params.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
-  return { token: "VST", params } 
+  return new Vst({ token: "VST", params });
 }
-NOTES = "NOTES" crlf note: pi_string { return { token: "NOTES", params: [ note ]} }
+NOTES = "NOTES" crlf note: pi_string { return new Notes({ token: "NOTES", params: [ note ]}); }
 
 /*
 Parameters are everything after the token.

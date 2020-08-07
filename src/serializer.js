@@ -2,19 +2,29 @@ const { dump } = require(".");
 
 // Base class for parsing objects that are not special.
 class BaseSerializer {
-    constructor (serializer) {
-        this.serializer = serializer;
+    constructor (obj) {
+        if (!obj.token) throw new Error('Objects need to have a token key');
+        if (typeof obj.token !== 'string') throw new Error('obj.token has to have type string');
+        if (!obj.params) obj.params = [];
+        
+        if (!Array.isArray(obj.params)) throw new Error('obj.params has to have type Array');
+        if (!obj.contents) obj.contents = [];
+        if (!Array.isArray(obj.contents)) throw new Error('obj.contents has to have type Array');
+
+        this.token = obj.token
+        this.params = obj.params
+        this.contents = obj.contents
     }
 
-    dumpObject(obj, indent = 0){
-        var start = "  ".repeat(indent) + "<" + this.dumpStruct(obj) + '\n'
+    dump(indent = 0){
+        var start = "  ".repeat(indent) + "<" + this.dumpStruct(this.token, this.params) + '\n'
         var body = "";
-        for (let o of obj.contents) {
+        for (let o of this.contents) {
             if (o.contents) {
-                body += this.serializer.parseObject(o, indent + 1) + "\n";
+                body += o.dump(indent + 1) + "\n";
             }
             else{
-                body += this.dumpStruct(o, indent + 1) + "\n";
+                body += this.dumpStruct(o.token, o.params, indent + 1) + "\n";
             }
         }
         var end = "  ".repeat(indent) + ">";
@@ -28,17 +38,20 @@ class BaseSerializer {
 
     dumpString(s, indent) {
         if (typeof s !== 'string') throw new Error('dumpString was not passed a string');
-        
-        if (s.includes('"')) {
-            if (s.includes("'")){
-                if (s.includes('`')){
-                    return "`" + s.replace(/`/g, "'") + "`";
+
+        if (s.includes(' ') || s.length == 0 || s[0] == '"' || s[0] == '`' || s[0] == "'") {
+            if (s.includes('"')) {
+                if (s.includes("'")){
+                    if (s.includes('`')){
+                        return "`" + s.replace(/`/g, "'") + "`";
+                    }
+                    return "`" + s + "`";
                 }
-                return "`" + s + "`";
+                return "'" + s + "'";
             }
-            return "'" + s + "'";
+            return '"' + s + '"';
         }
-        return '"' + s + '"';
+        return s
     }
 
     dumpSpecialStrings(token, special, indent) {
@@ -73,32 +86,34 @@ class BaseSerializer {
         return specialStrings;
     }
 
-    dumpStruct(struct, indent = 0) {
-        var specialStrings = this.findSpecialStrings(struct.params);
-        var params = this.dumpParams(struct.params);
-        var res = "  ".repeat(indent) + struct.token + params;
+    dumpStruct(token, params, indent = 0) {
+        var specialStrings = this.findSpecialStrings(params);
+        var sparams = this.dumpParams(params);
+        var res = "  ".repeat(indent) + token + sparams;
 
-        res += this.dumpSpecialStrings(struct.token, specialStrings, indent+1);
+        res += this.dumpSpecialStrings(token, specialStrings, indent+1);
 
         return res;
     }
 }
 
+class ReaperProject extends BaseSerializer {
+    // the constructor should create a parsed version of a empty reaper project
+}
+
 //TODO: Implement an FXChain object handler
 class VstSerializer extends BaseSerializer {
-    dumpObject(obj, indent = 0) {
+    constructor (obj) {
+        super(obj);
+    }
 
-        var params = this.dumpParams(obj.params.slice(0, -5));
-
-        // This part may not be needed if Reaper doesn't care if the strings are double quoted
-        var vstInfo = obj.params.slice(end=-3);
-        var nodq = obj.params.slice(-5, -4);
-        var leftover = this.dumpParams(obj.params.slice(-4, -3));
-        var res = "  ".repeat(indent) + obj.token + params + " " + nodq + leftover;
+    dump(indent = 0) {
+        var params = this.dumpParams(this.params.slice(0, -3));
+        var res = "  ".repeat(indent) + this.token + params;
 
         var lines = [];
         var start = 0;
-        var vst2 = obj.params.slice(-2)[0]
+        var vst2 = this.params.slice(-2)[0]
         for (var i = 0; i < vst2.length; i++){
             if (i % 128 == 0 && i != 0){
                 lines.push(vst2.slice(start, i))
@@ -108,14 +123,14 @@ class VstSerializer extends BaseSerializer {
         if (vst2.length % 128 != 0) lines.push(vst2.slice(start, vst2.length))
         
         var start = "  ".repeat(indent) + "<" + res + '\n'
-        var vst1 = "  ".repeat(indent + 1) + obj.params.slice(-3)[0] + '\n'
+        var vst1 = "  ".repeat(indent + 1) + this.params.slice(-3)[0] + '\n'
         
         var body = ""
         for (let line of lines) {
             body += "  ".repeat(indent+1) + line + '\n';
         }
 
-        var vst3 = "  ".repeat(indent + 1) + obj.params.slice(-1)[0] + '\n'
+        var vst3 = "  ".repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
         var end = "  ".repeat(indent) + ">";
 
         return start + vst1 + body + vst3 + end;
@@ -124,8 +139,12 @@ class VstSerializer extends BaseSerializer {
 }
 
 class NotesSerializer extends BaseSerializer {
-    dumpObject(obj, indent = 0) {
-        let notes = obj.params[0].split('\n');
+    constructor (obj) {
+        super(obj);
+    }
+
+    dump(indent = 0) {
+        let notes = this.params[0].split('\n');
         var start = "  ".repeat(indent) + "<NOTES\n";
         var body = "";
         for (let line of notes) {
@@ -139,12 +158,12 @@ class NotesSerializer extends BaseSerializer {
 /**
    * Serializes an object and outputs it as an RPP file. 
    */
-class Serializer {
+class TestsSerializer {
     constructor () {
         // initialize the other serializers here
-        this.base = new BaseSerializer(this);
-        this.vst = new VstSerializer(this);
-        this.notes = new NotesSerializer(this);
+        this.base = new BaseSerializer({token: "TEST"});
+        this.vst = new VstSerializer({token: "TEST"});
+        this.notes = new NotesSerializer({token: "TEST"});
     }
 
     parseObject(obj, indent = 0 /* Internal Use Only */) {
@@ -160,11 +179,11 @@ class Serializer {
         */
         switch(obj.token) {
             case 'VST':
-                return this.vst.dumpObject(obj, indent);
+                return this.vst.dump(obj, indent);
             case 'NOTES':
-                return this.notes.dumpObject(obj, indent);
+                return this.notes.dump(obj, indent);
             default:
-                return this.base.dumpObject(obj, indent);
+                return this.base.dump(obj, indent);
         }
     }
 
@@ -195,4 +214,9 @@ class Serializer {
     }
 }
 
-module.exports = Serializer
+module.exports = {
+    BaseSerializer,
+    VstSerializer,
+    NotesSerializer,
+    TestsSerializer,
+}

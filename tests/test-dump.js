@@ -2,53 +2,55 @@ const mocha = require('mocha');
 const should = require('should');
 const Serializer = require('../src/serializer');
 
+const Serializers = require('../src/serializer.js')
+const Base = Serializers.BaseSerializer
+const Vst = Serializers.VstSerializer
+const Notes = Serializers.NotesSerializer
+
 describe('serializer', function() {
 
-  serializer = new Serializer()
+  const serializer = new Serializers.TestsSerializer();
 
-  describe('object rule', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
-    const dump = input => serializer.dump(input, {startRule: 'object'});
-
+  describe('object rule', function() {    
     // TODO: Check if reaper ever puts objects one line
     it('should dump a one line object', function() {
-      dump({
+      new Base({
           token: 'TEST',
           params: [1],
           contents: [],
-      }).should.equal('<TEST 1\n>');
+      }).dump().should.equal('<TEST 1\n>');
     });
 
     it('should dump a multiline object with two structs', function() {
-      dump({
+      new Base({
           token: 'NAME',
           params: ['GUITAR'],
           contents: [
             {token: 'VOLUME', params: [11]},
           ],
-      }).should.equal(`<NAME "GUITAR"\n  VOLUME 11\n>`);
+      }).dump().should.equal(`<NAME GUITAR\n  VOLUME 11\n>`);
     });
 
     it('should dump a multiline object with two structs and an object', function() {
-      dump({
+      new Base({
           token: 'NAME',
           params: ['GUITAR'],
           contents: [
             {token: 'VOLUME', params: [11]},
-            {
+            new Base({
               token: 'METRONOME',
               params: [6, 2],
               contents: [
                 {token: 'VOL', params: [0.25, 0.125]},
               ]
-            }
+            }),
           ],
-      }).should.equal(`<NAME "GUITAR"\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`);
+      }).dump().should.equal(`<NAME GUITAR\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`);
     });
   }); // Describe object Rule
 
   describe('int rule', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
+    // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
     const dump = input => serializer.dump(input, {startRule: 'int'});
 
     it('should dump 0', function() { dump(0).should.equal('0'); });
@@ -57,7 +59,7 @@ describe('serializer', function() {
   }) // Describe int rule
 
   describe('decimal rule', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
+    // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
     const dump = input => serializer.dump(input, {startRule: 'decimal'});
 
     it('should dump 0.0', function() { dump(0.0).should.equal('0'); });
@@ -67,7 +69,7 @@ describe('serializer', function() {
   }) // Describe decimal rule
 
   describe('params rule', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
+    // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
     const dump = input => serializer.dump(input, {startRule: 'params'});
 
     const t01 = [0, 1];
@@ -82,17 +84,17 @@ describe('serializer', function() {
 
     const t03 = ['ok', 1, 2, 3];
     it(`should dump "${t03}" as a string and three ints`, function() {
-      dump(t03).should.equal(' "ok" 1 2 3');
+      dump(t03).should.equal(' ok 1 2 3');
     });
 
     const t04 = ['', '1234{}'];
     it(`should dump "${t04}" as an empty string and a string that starts with an integer`, function() {
-      dump(t04).should.equal(' "" "1234{}"');
+      dump(t04).should.equal(' "" 1234{}');
     });
   }); // describe params
 
   describe('string rule', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
+    // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
     const dump = input => serializer.dump(input, {startRule: 'string'});
 
     it('should dump strings', function() {
@@ -103,7 +105,7 @@ describe('serializer', function() {
     it('should handle non-alphanumeric characters', function() {
       dump('! ok').should.equal('"! ok"');
       dump('ok !').should.equal('"ok !"');
-      dump('!@#$%^&*()_+').should.equal('"!@#$%^&*()_+"');
+      dump('!@#$%^&*()_+').should.equal('!@#$%^&*()_+');
     });
 
     it('should handle strings beginning with quotes', function() {
@@ -118,34 +120,32 @@ describe('serializer', function() {
 
 
   describe('multiline parameters', function() {
-    // To use a custom 'startRule', you must add it to the switch statement in serializer.js
-    const dump = input => serializer.dump(input, {startRule: 'object'});
 
     it('should dump NOTES objects', function() {
-      dump({
+      new Notes({
           token: 'NOTES',
           params: ['| Line one with extra pipes |\n Second Line'],
           contents: [],
-      }).should.equal('<NOTES\n  || Line one with extra pipes |\n  | Second Line\n>')
+      }).dump().should.equal('<NOTES\n  || Line one with extra pipes |\n  | Second Line\n>')
     });
 
     it('should dump strings that start with a string delimiter and contain all delimiters', () => {
-      dump({
+      new Base({
           token: 'NAME',
           params: [`'''\`\`\`"""`,],
           contents: [],
-      }).should.equal(`<NAME \`''''''"""\`\n  <NAME\n    |'''\`\`\`"""\n  >\n>`);
+      }).dump().should.equal(`<NAME \`''''''"""\`\n  <NAME\n    |'''\`\`\`"""\n  >\n>`);
     });
 
     it('should dump VSTs/Plugins containing Base64', function() {
-      dump({
+      new Vst({
           token: 'VST',
           params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
                   `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,
                   `AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0AAQRwbHVnaW5JRAABDwVUU3RlcmVvIERlbGF5AHByb2dyYW1EaXJ0eQABAQNjdXJyZW50UHJvZ3JhbQABEQVGYWN0b3J5IERlZmF1bHQAcHJvZ3JhbUlEAAABF1BBUkFNAAECaWQAAQsFZGVsYXlzeW5jAHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQcFZHJ5ZGIAdmFsdWUAAQkEAAAAAAAARMAAUEFSQU0AAQJpZAABCAVlbmFibGUAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABBwVpbnB1dAB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEQBWxjcm9zc2ZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAAAAAFBBUkFNAAECaWQAAQoFbGRlbGF5bXMAdmFsdWUAAQkEAAAAAABAf0AAUEFSQU0AAQJpZAABDAVsZGVsYXlub3RlAHZhbHVlAAEJBAAAAAAAAAhAAFBBUkFNAAECaWQAAQ4FbGRlbGF5b2Zmc2V0AHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQsFbGZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAD5AAFBBUkFNAAECaWQAAQoFbGhpZ2hjdXQAdmFsdWUAAQkEAAAAAACI00AAUEFSQU0AAQJpZAABCQVsbG93Y3V0AHZhbHVlAAEJBAAAAAAAADRAAFBBUkFNAAECaWQAAQYFbHBhbgB2YWx1ZQABCQQAAAAAAADwvwBQQVJBTQABAmlkAAEJBWxzb3VyY2UAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABEAVyY3Jvc3NmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEKBXJkZWxheW1zAHZhbHVlAAEJBAAAAAAAQH9AAFBBUkFNAAECaWQAAQwFcmRlbGF5bm90ZQB2YWx1ZQABCQQAAAAAAAAIQABQQVJBTQABAmlkAAEOBXJkZWxheW9mZnNldAB2YWx1ZQABCQQAAAAAAADwPwBQQVJBTQABAmlkAAELBXJmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAA+QABQQVJBTQABAmlkAAEKBXJoaWdoY3V0AHZhbHVlAAEJBAAAAAAAiNNAAFBBUkFNAAECaWQAAQkFcmxvd2N1dAB2YWx1ZQABCQQAAAAAAAA0QABQQVJBTQABAmlkAAEGBXJwYW4AdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABCQVyc291cmNlAHZhbHVlAAEJBAAAAAAAAABAAFBBUkFNAAECaWQAAQcFd2V0ZGIAdmFsdWUAAQkEAAAAAAAAJMAAAAAAAAAAAABKVUNFUHJpdmF0ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=`,
                   `AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=`],
           contents: [],
-      }).should.deepEqual(`<VST "VST3: #TStereo Delay (Tracktion)" "#TStereo Delay.vst3" 0 "" 1997878177{5653545344656C237473746572656F20} ""
+      }).dump().should.deepEqual(`<VST "VST3: #TStereo Delay (Tracktion)" "#TStereo Delay.vst3" 0 "" 1997878177{5653545344656C237473746572656F20} ""
   oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA
   AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0A
