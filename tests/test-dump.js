@@ -2,7 +2,7 @@ const mocha = require('mocha');
 const should = require('should');
 const Serializer = require('../src/serializer');
 
-const { ReaperProject, Base, Vst, Track, AudioClip, Notes, Tests, FXChain } = require('../src/serializer.js')
+const { ReaperProject, Base, Vst, Track, AudioItem, Notes, Tests, FXChain } = require('../src/serializer.js')
 
 describe('serializer', function() {
 
@@ -154,19 +154,19 @@ describe('serializer', function() {
       }).dump().should.deepEqual('<TRACK\n  NAME scream\n>')
     });
 
-    it('should add an AUDIOCLIP to TRACK objects', function() {
+    it('should add an AudioItem to TRACK objects', function() {
       new Track({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']}
         ]
-      }).addAudioClip(2, 0.10179138321995, __dirname + '../rpp-examples/media/909-kick.wav').should.deepEqual( new Track({
+      }).addAudioItem(2, 0.10179138321995, __dirname + '../rpp-examples/media/909-kick.wav').should.deepEqual( new Track({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']},
-          new AudioClip({
+          new AudioItem({
             token: 'ITEM',
             params: [],
             contents: [
@@ -185,14 +185,14 @@ describe('serializer', function() {
       }))
     });
 
-    it('should add an AUDIOCLIP to TRACK objects', function() {
+    it('should add an AudioItem to TRACK objects', function() {
       new Track({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']}
         ]
-      }).addAudioClipFromObject(new AudioClip({
+      }).addAudioItemFromObject(new AudioItem({
         token: 'ITEM',
         params: [],
         contents: [
@@ -211,7 +211,7 @@ describe('serializer', function() {
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']},
-          new AudioClip({
+          new AudioItem({
             token: 'ITEM',
             params: [],
             contents: [
@@ -230,8 +230,8 @@ describe('serializer', function() {
       }))
     });
 
-    it('should dump AUDIOCLIP objects', function() {
-      new AudioClip({
+    it('should dump AudioItem objects', function() {
+      new AudioItem({
         token: 'ITEM',
         params: [],
         contents: [

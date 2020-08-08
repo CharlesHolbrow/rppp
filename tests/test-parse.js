@@ -2,7 +2,7 @@ const mocha = require('mocha');
 const should = require('should');
 const parser = require('../src/parser-debug');
 
-const { ReaperProject, Base, Vst, Track, AudioClip, Notes, FXChain,  } = require('../src/serializer.js');
+const { ReaperProject, Base, Vst, Track, AudioItem, Notes, FXChain,  } = require('../src/serializer.js');
 
 describe('parser', function() {
 
@@ -159,8 +159,8 @@ describe('parser', function() {
       }))
     });
 
-    it('should parse AUDIOCLIP objects', function() {
-      parse('<ITEM\n  POSITION 2\n  LENGTH 10.2\n  <SOURCE WAVE\n    FILE "filename"\n  >\n>').should.deepEqual(new AudioClip({
+    it('should parse AudioItem objects', function() {
+      parse('<ITEM\n  POSITION 2\n  LENGTH 10.2\n  <SOURCE WAVE\n    FILE "filename"\n  >\n>').should.deepEqual(new AudioItem({
         token: 'ITEM',
         params: [],
         contents: [

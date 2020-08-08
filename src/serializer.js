@@ -127,18 +127,18 @@ class TrackSerializer extends BaseSerializer {
 
     }
 
-    addAudioClipFromObject (audioObj) {
-        if (! (audioObj instanceof AudioClipSerializer)) throw new TypeError("audioObj has to be of type AudioClipSerializer")
+    addAudioItemFromObject (audioObj) {
+        if (! (audioObj instanceof AudioItemSerializer)) throw new TypeError("audioObj has to be of type AudioItemSerializer")
         this.contents.push(audioObj);
         return this;
     }
 
-    addAudioClip(position, length, filename) {
+    addAudioItem(position, length, filename) {
         if (typeof filename !== 'string') throw new TypeError("filename has to be of type string")
         if (typeof length !== 'number') throw new TypeError("position has to be of type number")
         if (typeof position !== 'number') throw new TypeError("position has to be of type number")
         
-        this.contents.push(new AudioClipSerializer({
+        this.contents.push(new AudioItemSerializer({
             token: 'ITEM',
             params: [],
             contents: [
@@ -157,13 +157,13 @@ class TrackSerializer extends BaseSerializer {
     }
 }
 
-class AudioClipSerializer extends BaseSerializer {
+class AudioItemSerializer extends BaseSerializer {
     constructor (obj) {
         super(obj);
     }
 }
 
-class MidiClipSerializer extends BaseSerializer {
+class MidiItemSerializer extends BaseSerializer {
     constructor (obj) {
         super(obj);
     }
@@ -292,9 +292,9 @@ module.exports = {
     Base: BaseSerializer,
     Vst: VstSerializer,
     Track: TrackSerializer,
-    AudioClip: AudioClipSerializer,
+    AudioItem: AudioItemSerializer,
     Notes: NotesSerializer,
     Tests: TestsSerializer,
-    MidiClip: MidiClipSerializer,
+    MidiItem: MidiItemSerializer,
     FXChain: FXChainSerializer,
 }

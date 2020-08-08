@@ -1,5 +1,5 @@
 {
-  const { ReaperProject, Base, Vst, Track, AudioClip, Notes, Tests, FXChain } = require('./serializer.js');
+  const { ReaperProject, Base, Vst, Track, AudioItem, Notes, Tests, FXChain, MidiItem } = require('./serializer.js');
 }
 
 /*
@@ -43,7 +43,7 @@ token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 /*
 Parsing for special tokens
 */
-special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOCLIP / FXCHAIN / VST
+special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOITEM / FXCHAIN / VST
 FXCHAIN = "FXCHAIN" params: params crlf contents: (VST/struct/object)* {
   return new FXChain({ token: "FXCHAIN", params, contents}); 
 }
@@ -61,7 +61,7 @@ VST = BYPASSparams: (white* "BYPASS" p: params crlf {return p;})?
   if (FLOATPOSparams) returnObject.externalAttributes["FLOATPOS"] = FLOATPOSparams;
   if (FXIDparams) returnObject.externalAttributes["FXID"] = FXIDparams;
   if (WAKparams) returnObject.externalAttributes["WAK"] = WAKparams;
-  
+
   VSTparams.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
   returnObject.params = VSTparams;
 
@@ -78,13 +78,13 @@ TRACK = "TRACK" params:params crlf contents: (struct/object)* {
 REAPER_PROJECT = "REAPER_PROJECT" params:params crlf contents: (struct/object)* { 
   return new ReaperProject({token: "REAPER_PROJECT", params: params, contents})
 }
-AUDIOCLIP = "ITEM" params:params crlf contents:(struct/object)* & {
+AUDIOITEM = "ITEM" params:params crlf contents:(struct/object)* & {
   for(let line of contents){
     if(line.token === "SOURCE" && line.params[0] === "WAVE") return true;
   }
   return false;
 } {
-  return new AudioClip({token: "ITEM", params: params, contents})
+  return new AudioItem({token: "ITEM", params: params, contents})
 }
 
 /*
