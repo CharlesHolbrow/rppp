@@ -1,11 +1,44 @@
+// Charles: watch out for unused imports/requires. I think dump, get-audio
+// -duration, and start are all unused right now. I'm hoping that this can run
+// in the browser, so for now try to avoid any unnecessary dependencies.
 const { dump } = require(".");
 const parser = require("./parser")
 const fs = require("fs")
 const { getAudioDurationInSeconds } = require('get-audio-duration');
 const { start } = require("repl");
  
+
+// Charles: The classes like TrackSerializer, VstSerializer are now more
+// than just serializers. They stand in for the reaper objects themselves.
+// I think they should be names ReaperTrack, ReaperVst, etc (or perhaps 
+// ReaTrack and ReaVst. VS Code's "Rename Symbol" feature should make this
+// change easy to do.
+
+// Charles: Comment strings should also wrap at a consistent line length. I
+// usually limit my comments to 80 characters. If a comment needs the 81st
+//character, I wrap it to a new line. This keeps the code looking much cleaner.
+// There's lots of different ways to handle this, but when adding code to a
+// library that's already setup, it's the best practice the follow the
+// existing style. Adding a linter makes this a thousand times easier, but I
+// have a bad habit of not linting my code. Since we're both working on this
+// together, It's probably worth adding a linter.
+
+// Charles: Let's add a typedef for {token: 'BLAH', params: [...]} This will
+// make reading the code below much easier. JSDoc has a way to document objects 
+// that have specific layout and type requirements. See below:
+/**
+ * @typedef {Object} ReaData
+ * @property {string} token Reaper token such as VST, TRACK, or NAME
+ * @property {string[]} params ex. ["hi", 5000]]
+ * @property {ReaData[]} [contents] optional contents 
+ */
+
 // Base class for parsing objects that are not special.
 class BaseSerializer {
+
+    /**
+     * @param {ReaData} obj
+     */
     constructor (obj) {
         if (!obj.token) throw new TypeError('Objects need to have a token key');
         if (typeof obj.token !== 'string') throw new TypeError('obj.token has to have type string');
@@ -35,6 +68,10 @@ class BaseSerializer {
         return start + body + end;
     }
 
+    // Charles: Looks like most of the dump methods should be static methods, as
+    // they do use (or need) `.this`. For that reason, it might actually make
+    // sense to just define them as functions at the top of the file... but 
+    // static methods would be okay too.
     dumpNum(i) {
         if (typeof i !== 'number') throw new TypeError('dumpNum was not passed a number');
         return i.toString();
@@ -106,12 +143,20 @@ class ReaperProjectSerializer extends BaseSerializer {
     constructor(obj) {
         if (obj) { super(obj); }
         else{
+
+            // Charles: I like this approach... making obj an optional argument.
+            // We probably don't want to read from the disk every time that a
+            // new instance of the class is created. What about reading the file
+            // when the library is loaded, and just storing it in a string?
             let emptys = fs.readFileSync(__dirname + "/../rpp-examples/empty.RPP", 'utf8');
             let empty = parser.parse(emptys)
             super(empty);
         }
     }
 
+    // Charles: addTrack takes a "name", string, while other objects take a
+    // `{ token: 'BLAH', params: ['hi', 5000]}` style argument.
+    // 
     addTrack(name) {
         if (typeof name !== 'string') throw new TypeError("name has to be of type string")
         this.contents.push(new TrackSerializer({token: "TRACK", contents: [ {token: "NAME", params: [name]} ]}))
@@ -120,6 +165,10 @@ class ReaperProjectSerializer extends BaseSerializer {
 }
 
 class TrackSerializer extends BaseSerializer {
+
+    // Charles: I believe this constructor can be omitted. I'm pretty sure that 
+    // when no constructor is declared, the super constructor will be called
+    // automatically. 
     constructor (obj) {
         super(obj);
     }
@@ -130,16 +179,35 @@ class TrackSerializer extends BaseSerializer {
         return this;
     }
 
+    // Charles: The definition of NoteObject in the fluid-music library has changed.
+    // Now there are `Note`s and `ClipEvents`. Midi notes are just one kind of Note,
+    // and I wanted to be able to plug many different kinds of objects into
+    // `NoteLibrary`s for representing lots of different kinds of timeline events.
+    // Let's talk about the right way to handle notes in the RPP library. For now,
+    // I'll update the NoteObject @param below
+
+    /**
+     * @typedef {Object} MidiNote
+     * @property {number} s Start time in whole notes
+     * @property {number} l Length in whole notes
+     * @property {number} v midi velocity 
+     * @property {number} n Midi note Number 
+     */
+
     /**
      * Build a MidiClip that creates a clip with a bunch of midi notes
      * @param { string } clipName name of the clip.
      * @param { number } startTimeInWholeNotes clip start time in whole notes
      * @param { number} durationInWholeNotes clip length in whole notes
-     * @param { NoteObject[] } notes array of objects, which look like:
-     *    `{ l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }`
-     *    Be careful that all note.n properties are numbers.
+     * @param { MidiNote[] } notes
      */
     addMidiItemFromNotes(name, startPosition, length, midiArray, midiSettings) {
+
+        // Charles: I'm a little hesitant to go down this path, because we don't
+        // want to have to do this for every type we want to add. It feels like
+        // we want the .parse function here, but we have to be careful not
+        // to create a circular dependency. Let's think together about how to
+        // handle this.
         let midiObj = new MidiItemSerializer({
             token: 'ITEM',
             params: [],
@@ -213,6 +281,8 @@ class MidiItemSerializer extends BaseSerializer {
         }
     }
 
+    // Charles: This is a more complicated function, so it should definitely
+    // have a clear JSDoc string. It looks like it can probably be a static too.
     getMidiMessage(midiArray, midiSettings = {ticksQN: 960}) {
         /*
         Outputs something like this:
@@ -316,6 +386,21 @@ class FXChainSerializer extends BaseSerializer {
         super(obj);
     }
 
+    // Charles: My instinct is to make `.add` a BaseSerializer Method. 
+    // Then addVst can look more like this:
+    // ```
+    // addVst(vstObj) {
+    //   if (!instanceof VSTSerializer) throw...
+    //   super.add(vstObj)
+    // }
+    //
+    // // Which allows you to write code like this:
+    //
+    // someObject.add(new Vst(...));
+    // ```
+    //
+    // This centralizes the meaning of "add", and for example, makes it easier to
+    // rename the `.contents` variable, or refactor in other ways.
     addVst(vstObj) {
         if (! (vstObj instanceof VstSerializer)) throw new TypeError("vstObj has to be of type VstSerializer")
         this.contents.push(vstObj);
@@ -330,6 +415,7 @@ class VstSerializer extends BaseSerializer {
         else this.externalAttributes = {}
     }
 
+    // Charles: let's talk about what .externalAttributes means. 
     dumpExternalAttribute(attr, indent){
         if (typeof attr !== 'string') throw new TypeError ("attr must be of type string");
         if (this.externalAttributes[attr]){
@@ -394,8 +480,8 @@ class NotesSerializer extends BaseSerializer {
 }
 
 /**
-   * Serializes an object and outputs it as an RPP file. 
-   */
+ * Serializes an object and outputs it as an RPP file. 
+ */
 class TestsSerializer {
     constructor () {
         // initialize the other serializers here
