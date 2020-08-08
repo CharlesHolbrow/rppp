@@ -2,7 +2,7 @@ const mocha = require('mocha');
 const should = require('should');
 const parser = require('../src/parser-debug');
 
-const { ReaperProject, Base, Vst, Track, AudioItem, Notes, FXChain,  } = require('../src/serializer.js');
+const { ReaperProject, Base, Vst, Track, AudioItem, Notes, FXChain, MidiItem,  } = require('../src/serializer.js');
 
 describe('parser', function() {
 
@@ -155,6 +155,40 @@ describe('parser', function() {
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']}
+        ]
+      }))
+    });
+
+    it('should parse MidiItem objects', function() {
+      parse(`<ITEM
+  POSITION 2
+  LENGTH 2
+  <SOURCE MIDI
+    HASDATA 1 960 QN
+    CCINTERP 32
+    POOLEDEVTS {10F9B930-32BF-604C-86D1-B6819C2E6F41}
+    E 0 90 3c 60
+    E 480 80 3c 00
+    E 0 b0 7b 00
+  >
+>`).should.deepEqual(new MidiItem({
+        token: 'ITEM',
+        params: [],
+        contents: [
+          {token: 'POSITION', params: [2]},
+          {token: 'LENGTH', params: [2]},
+          new Base({
+            token: 'SOURCE', 
+            params: ['MIDI'],
+            contents: [
+              {token: 'HASDATA', params: [1, 960, 'QN']},
+              {token: 'CCINTERP', params: [32]},
+              {token: 'POOLEDEVTS', params: ['{10F9B930-32BF-604C-86D1-B6819C2E6F41}']},
+              {token: 'E', params: [0, 90, '3c', 60]},
+              {token: 'E', params: [480, 80, '3c', 00]},
+              {token: 'E', params: [0, 'b0', '7b', 00]},
+            ]
+          })
         ]
       }))
     });

@@ -2,6 +2,7 @@ const { dump } = require(".");
 const parser = require("./parser")
 const fs = require("fs")
 const { getAudioDurationInSeconds } = require('get-audio-duration');
+const { start } = require("repl");
  
 // Base class for parsing objects that are not special.
 class BaseSerializer {
@@ -123,8 +124,41 @@ class TrackSerializer extends BaseSerializer {
         super(obj);
     }
 
-    addMidiItem() {
+    addMidiItemFromObject(midiObj) {
+        if (! (midiObj instanceof MidiItemSerializer)) throw new TypeError("midiObj has to be of type MidiItemSerializer")
+        this.contents.push(midiObj);
+        return this;
+    }
 
+    /**
+     * Build a MidiClip that creates a clip with a bunch of midi notes
+     * @param { string } clipName name of the clip.
+     * @param { number } startTimeInWholeNotes clip start time in whole notes
+     * @param { number} durationInWholeNotes clip length in whole notes
+     * @param { NoteObject[] } notes array of objects, which look like:
+     *    `{ l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }`
+     *    Be careful that all note.n properties are numbers.
+     */
+    addMidiItemFromNotes(name, startPosition, length, midiArray, midiSettings) {
+        let midiObj = new MidiItemSerializer({
+            token: 'ITEM',
+            params: [],
+            contents: [
+              {token: 'POSITION', params: [ startPosition ]},
+              {token: 'LENGTH', params: [ length ]},
+              {token: 'NAME', params: [ name ]},
+              new BaseSerializer({
+                token: 'SOURCE', 
+                params: ['MIDI'],
+                contents: [ ]
+              })
+            ]
+        });
+
+        midiObj.contents[3].contents = midiObj.getMidiMessage(midiArray, midiSettings);
+
+        this.addMidiItemFromObject(midiObj);
+        return this;
     }
 
     addAudioItemFromObject (audioObj) {
@@ -138,7 +172,7 @@ class TrackSerializer extends BaseSerializer {
         if (typeof length !== 'number') throw new TypeError("position has to be of type number")
         if (typeof position !== 'number') throw new TypeError("position has to be of type number")
         
-        this.contents.push(new AudioItemSerializer({
+        let audioObj = new AudioItemSerializer({
             token: 'ITEM',
             params: [],
             contents: [
@@ -152,7 +186,9 @@ class TrackSerializer extends BaseSerializer {
                     ]
                 })
             ]
-        }));
+        })
+
+        this.addAudioItemFromObject(audioObj);
         return this;
     }
 }
@@ -164,8 +200,114 @@ class AudioItemSerializer extends BaseSerializer {
 }
 
 class MidiItemSerializer extends BaseSerializer {
-    constructor (obj) {
+    constructor (obj, midiArray) {
         super(obj);
+
+        for(var i = 0; i < this.contents.length; i++){
+            if (this.contents[i].token === 'SOURCE' && this.contents[i].params[0] === 'MIDI'){
+                if(midiArray){
+                    this.contents[i] = this.getMidiMessage(midiArray);
+                }
+                this.contents[i] = this.cleanMidi(this.contents[i]);
+            }
+        }
+    }
+
+    getMidiMessage(midiArray, midiSettings = {ticksQN: 960}) {
+        /*
+        Outputs something like this:
+        [{token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, 90, '3c', 60]},
+        {token: 'E', params: [480, 80, '3c', 00]},
+        {token: 'E', params: [0, 'b0', '7b', 00]},
+        {token: 'X', params: [2^32 + 1, '90', '3c', 00]},
+        {token: 'X', params: [2^32 + 1, '80', '3c', 00]},]
+
+        from this:
+        `{ c: midiChannel, l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }`
+        */
+
+        const conversion = 4
+        const ticksWholeNotes = midiSettings.ticksQN * conversion;
+
+        let midiMessage = [{token: 'HASDATA', params: [1, midiSettings.ticksQN, 'QN']},];
+
+        const note = (offset, channelAndStatus, midin, midiv) => {
+            const res = []
+            if (offset > Math.pow(2, 32) - 1){
+                res.push(offset - Math.pow(2, 32) - 1)
+                res.push(Math.pow(2, 32) - 1)
+            } else{
+                res.push(offset)
+            }
+            res.push(channelAndStatus);
+            res.push(midin);
+
+            if (channelAndStatus[0] == '8') res.push('00');
+            else res.push(midiv);
+
+            return res;
+        }
+
+        let midiStatus = [...Array(16)].map(x=>[...Array(128)].map(y=>[[0, 'NONE', 0]])); // 16 Channels, 128 Possible notes
+        for(let note of midiArray) {
+            if (!note.c) note.c = 0;
+            if (!note.v) note.v = 64;
+            const startTick = note.s * ticksWholeNotes;
+            const lengthTick = note.l * ticksWholeNotes;
+
+            midiStatus[note.c][note.n].push([startTick, '9', note.v]);
+            midiStatus[note.c][note.n].push([startTick + lengthTick, '8', note.v]);
+        }
+
+        for(var i = 0; i < 16; i++){
+            for(var j = 0; j < 128; j++){
+                if (midiStatus[i][j].length > 1){
+                    midiStatus[i][j].sort(function compare(a, b){
+                        return a[0] - b[0];
+                    });
+
+                    console.log(midiStatus[i][j])
+                    
+                    for(var k = 1; k < midiStatus[i][j].length; k++){
+                        let channel = i.toString(16);
+                        if (channel.length > 1) throw new Error("midi channel has to be between 0 and 15")
+    
+                        let midin = j.toString(16)
+                        if (midin.length < 2) midin = '0' + midin;
+                        if (midin.length > 2) throw new Error("midi note has to be between 0 and 127")
+                        
+                        let midiv = midiStatus[i][j][k][2].toString(16)
+                        if (midiv.length < 2) midiv = '0' + midiv;
+                        if (midiv.length > 2) throw new Error("midi velocity has to be between 0 and 127")
+    
+                        let eventId = 'E'
+                        let offset = midiStatus[i][j][k][0] - midiStatus[i][j][k - 1][0];
+                        if (midiStatus[i][j][k] - midiStatus[i][j][k - 1] > Math.pow(2, 32) - 1){
+                            eventId = 'X';
+                        }
+
+                        midiMessage.push( {token: eventId, params: note(offset, midiStatus[i][j][k][1] + channel, midin, midiv) } )
+                    }
+                }
+            }
+        }        
+
+        return midiMessage;
+    }
+
+    cleanMidi(obj) {
+        for(var i = 0; i < obj.contents.length; i++){
+            if (['E', 'e', 'X', 'x', 'Em', 'em', 'Xm', 'xm'].indexOf(obj.contents[i].token) >= 0){
+                for(var j = 1; j < 4; j++){
+                    obj.contents[i].params[j] = obj.contents[i].params[j].toString();
+                    if (obj.contents[i].params[j].length < 2){
+                        obj.contents[i].params[j] = '0' + obj.contents[i].params[j];
+                    }
+                }
+            }
+        }
+        return obj;
     }
 }
 
@@ -260,6 +402,7 @@ class TestsSerializer {
         this.base = new BaseSerializer({token: "TEST"});
         this.vst = new VstSerializer({token: "TEST"});
         this.notes = new NotesSerializer({token: "TEST"});
+        this.midi = new MidiItemSerializer({token: "TEST"});
     }
 
     /**
@@ -281,6 +424,8 @@ class TestsSerializer {
                 return this.base.dumpParams(input);
             case 'string':
                 return this.base.dumpString(input);
+            case 'midi':
+                return this.midi.getMidiMessage(input);
             default:
                 return input.dump();
         }

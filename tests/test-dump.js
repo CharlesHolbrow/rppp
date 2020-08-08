@@ -2,7 +2,7 @@ const mocha = require('mocha');
 const should = require('should');
 const Serializer = require('../src/serializer');
 
-const { ReaperProject, Base, Vst, Track, AudioItem, Notes, Tests, FXChain } = require('../src/serializer.js')
+const { ReaperProject, Base, Vst, Track, AudioItem, MidiItem, Notes, Tests, FXChain } = require('../src/serializer.js')
 
 describe('serializer', function() {
 
@@ -45,6 +45,101 @@ describe('serializer', function() {
       }).dump().should.equal(`<NAME GUITAR\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>`);
     });
   }); // Describe object Rule
+
+  describe('midi message rule', function() {
+      
+    // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
+    const dump = input => serializer.dump(input, {startRule: 'midi'});
+
+    it('should get midi message for [{n: 5, s: 0, l: 2}]', function() { dump([ {n: 5, s: 0, l: 2 } ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [960 * 4 * 2, '80', '05', '00']}
+      ] 
+    )});
+
+    it('should work for a message with two or more notes', function() { dump([ 
+      {n: 5, s: 0, l: 0.25 },
+      {n: 6, s: 0.25, l: 0.25 },
+      {n: 7, s: 1, l: 0.25 },
+      {n: 7, s: 1.25, l: 0.25 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [960, '80', '05', '00']},
+        {token: 'E', params: [960, '90', '06', '40']},
+        {token: 'E', params: [960, '80', '06', '00']},
+        {token: 'E', params: [960 * 4, '90', '07', '40']},
+        {token: 'E', params: [960, '80', '07', '00']},
+        {token: 'E', params: [0, '90', '07', '40']},
+        {token: 'E', params: [960, '80', '07', '00']}
+      ] 
+    )});
+
+    it('should work for a message with two notes played at once', function() { dump([
+      {n: 5, s: 0, l: 2 },
+      {n: 6, s: 0, l: 2 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [960 * 4 * 2, '80', '05', '00']},
+        {token: 'E', params: [0, '90', '06', '40']},
+        {token: 'E', params: [960 * 4 * 2, '80', '06', '00']}
+      ] 
+    )});
+
+    it('should work for a message with two notes overlapped', function() { dump([
+      {n: 5, s: 0, l: 2 },
+      {n: 5, s: 1, l: 2 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [3840, '80', '05', '00']},
+        {token: 'E', params: [3840, '90', '05', '40']},
+        {token: 'E', params: [3840, '80', '05', '00']}
+      ] 
+    )});
+
+    it('should work for a message with two notes added in not-ascending order', function() { dump([
+      {n: 5, s: 1, l: 2 },
+      {n: 5, s: 0, l: 2 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [3840, '80', '05', '00']},
+        {token: 'E', params: [3840, '90', '05', '40']},
+        {token: 'E', params: [3840, '80', '05', '00']}
+      ] 
+    )});
+
+    it('should work for a message with two notes played on different channels', function() { dump([
+      {c: 0, n: 5, s: 0, l: 0.25 },
+      {c: 1, n: 5, s: 0, l: 0.25 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '40']},
+        {token: 'E', params: [960, '80', '05', '00']},
+        {token: 'E', params: [0, '91', '05', '40']},
+        {token: 'E', params: [960, '81', '05', '00']}
+      ] 
+    )});
+
+    it('should work for a message with notes with different velocities', function() { dump([
+      {c: 0, n: 5, s: 0, l: 0.25, v: 2 },
+    ]).should.containDeep(
+      [
+        {token: 'HASDATA', params: [1, 960, 'QN']},
+        {token: 'E', params: [0, '90', '05', '02']},
+        {token: 'E', params: [960, '80', '05', '00']},
+      ] 
+    )});
+  }) // Describe midi rule
 
   describe('int rule', function() {
     // To use a custom 'startRule', you must add it to the switch statement in TestsSerializer
@@ -185,7 +280,7 @@ describe('serializer', function() {
       }))
     });
 
-    it('should add an AudioItem to TRACK objects', function() {
+    it('should add an AudioItem object to TRACK objects', function() {
       new Track({
         token: 'TRACK',
         params: [],
@@ -228,6 +323,125 @@ describe('serializer', function() {
           })
         ]
       }))
+    });
+
+    it('should add a MidiItem notes object to TRACK objects', function() {
+      new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']}
+        ]
+      }).addMidiItemFromNotes('TEST', 0, 5, [ {n: 5, s: 0, l: 2} ]).should.deepEqual(new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']},
+          new MidiItem({
+            token: 'ITEM',
+            params: [],
+            contents: [
+              {token: 'POSITION', params: [0]},
+              {token: 'LENGTH', params: [5]},
+              {token: 'NAME', params: ['TEST'] },
+              new Base({
+                token: 'SOURCE', 
+                params: ['MIDI'],
+                contents: [
+                  {token: 'HASDATA', params: [1, 960, 'QN']},
+                  {token: 'E', params: [0, '90', '05', '40']},
+                  {token: 'E', params: [960 * 4 * 2, '80', '05', '00']}
+                ] 
+              })
+            ]
+          })
+        ]
+      }))
+    });
+    
+    it('should add an MidiItem object to TRACK objects', function() {
+      new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']}
+        ]
+      }).addMidiItemFromObject(new MidiItem({
+        token: 'ITEM',
+        params: [],
+        contents: [
+          {token: 'POSITION', params: [2]},
+          {token: 'LENGTH', params: [2]},
+          new Base({
+            token: 'SOURCE', 
+            params: ['MIDI'],
+            contents: [
+              {token: 'HASDATA', params: [1, 960, 'QN']},
+              {token: 'E', params: [0, 90, '3c', 60]},
+              {token: 'E', params: [480, 80, '3c', 00]},
+              {token: 'E', params: [0, 'b0', '7b', 00]},
+            ]
+          })
+        ]
+      })).should.deepEqual(new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']},
+          new MidiItem({
+            token: 'ITEM',
+            params: [],
+            contents: [
+              {token: 'POSITION', params: [2]},
+              {token: 'LENGTH', params: [2]},
+              new Base({
+                token: 'SOURCE', 
+                params: ['MIDI'],
+                contents: [
+                  {token: 'HASDATA', params: [1, 960, 'QN']},
+                  {token: 'E', params: [0, 90, '3c', 60]},
+                  {token: 'E', params: [480, 80, '3c', 00]},
+                  {token: 'E', params: [0, 'b0', '7b', 00]},
+                ]
+              })
+            ]
+          })
+        ]
+      }))
+    });
+
+    it('should dump MidiItem objects', function() {
+      new MidiItem({
+        token: 'ITEM',
+        params: [],
+        contents: [
+          {token: 'POSITION', params: [2]},
+          {token: 'LENGTH', params: [2]},
+          new Base({
+            token: 'SOURCE', 
+            params: ['MIDI'],
+            contents: [
+              {token: 'HASDATA', params: [1, 960, 'QN']},
+              {token: 'CCINTERP', params: [32]},
+              {token: 'POOLEDEVTS', params: ['{10F9B930-32BF-604C-86D1-B6819C2E6F41}']},
+              {token: 'E', params: [0, 90, '3c', 60]},
+              {token: 'E', params: [480, 80, '3c', 00]},
+              {token: 'E', params: [0, 'b0', '7b', 00]},
+            ]
+          })
+        ]
+      }).dump().should.deepEqual(`<ITEM
+  POSITION 2
+  LENGTH 2
+  <SOURCE MIDI
+    HASDATA 1 960 QN
+    CCINTERP 32
+    POOLEDEVTS {10F9B930-32BF-604C-86D1-B6819C2E6F41}
+    E 0 90 3c 60
+    E 480 80 3c 00
+    E 0 b0 7b 00
+  >
+>`)
     });
 
     it('should dump AudioItem objects', function() {

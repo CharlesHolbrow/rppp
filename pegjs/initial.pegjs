@@ -43,7 +43,7 @@ token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 /*
 Parsing for special tokens
 */
-special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOITEM / FXCHAIN / VST
+special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOITEM / MIDIITEM / FXCHAIN / VST
 FXCHAIN = "FXCHAIN" params: params crlf contents: (VST/struct/object)* {
   return new FXChain({ token: "FXCHAIN", params, contents}); 
 }
@@ -85,6 +85,14 @@ AUDIOITEM = "ITEM" params:params crlf contents:(struct/object)* & {
   return false;
 } {
   return new AudioItem({token: "ITEM", params: params, contents})
+}
+MIDIITEM = "ITEM" params:params crlf contents:(struct/object)* & {
+  for(let line of contents){
+    if(line.token === "SOURCE" && line.params[0] === "MIDI") return true;
+  }
+  return false;
+} {
+  return new MidiItem({token: "ITEM", params: params, contents})
 }
 
 /*
