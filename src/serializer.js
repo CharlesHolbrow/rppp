@@ -6,13 +6,13 @@ const { getAudioDurationInSeconds } = require('get-audio-duration');
 // Base class for parsing objects that are not special.
 class BaseSerializer {
     constructor (obj) {
-        if (!obj.token) throw new Error('Objects need to have a token key');
-        if (typeof obj.token !== 'string') throw new Error('obj.token has to have type string');
+        if (!obj.token) throw new TypeError('Objects need to have a token key');
+        if (typeof obj.token !== 'string') throw new TypeError('obj.token has to have type string');
         if (!obj.params) obj.params = [];
         
-        if (!Array.isArray(obj.params)) throw new Error('obj.params has to have type Array');
+        if (!Array.isArray(obj.params)) throw new TypeError('obj.params has to have type Array');
         if (!obj.contents) obj.contents = [];
-        if (!Array.isArray(obj.contents)) throw new Error('obj.contents has to have type Array');
+        if (!Array.isArray(obj.contents)) throw new TypeError('obj.contents has to have type Array');
 
         this.token = obj.token
         this.params = obj.params
@@ -35,12 +35,12 @@ class BaseSerializer {
     }
 
     dumpNum(i) {
-        if (typeof i !== 'number') throw new Error('dumpNum was not passed a number');
+        if (typeof i !== 'number') throw new TypeError('dumpNum was not passed a number');
         return i.toString();
     }
 
     dumpString(s, indent) {
-        if (typeof s !== 'string') throw new Error('dumpString was not passed a string');
+        if (typeof s !== 'string') throw new TypeError('dumpString was not passed a string');
 
         if (s.includes(' ') || s.length == 0 || s[0] == '"' || s[0] == '`' || s[0] == "'") {
             if (s.includes('"')) {
@@ -112,7 +112,7 @@ class ReaperProjectSerializer extends BaseSerializer {
     }
 
     addTrack(name) {
-        if (typeof name !== 'string') throw new Error("name has to be of type string")
+        if (typeof name !== 'string') throw new TypeError("name has to be of type string")
         this.contents.push(new TrackSerializer({token: "TRACK", contents: [ {token: "NAME", params: [name]} ]}))
         return this;
     }
@@ -127,10 +127,16 @@ class TrackSerializer extends BaseSerializer {
 
     }
 
+    addAudioClipFromObject (audioObj) {
+        if (! (audioObj instanceof AudioClipSerializer)) throw new TypeError("audioObj has to be of type AudioClipSerializer")
+        this.contents.push(audioObj);
+        return this;
+    }
+
     addAudioClip(position, length, filename) {
-        if (typeof filename !== 'string') throw new Error("filename has to be of type string")
-        if (typeof length !== 'number') throw new Error("position has to be of type number")
-        if (typeof position !== 'number') throw new Error("position has to be of type number")
+        if (typeof filename !== 'string') throw new TypeError("filename has to be of type string")
+        if (typeof length !== 'number') throw new TypeError("position has to be of type number")
+        if (typeof position !== 'number') throw new TypeError("position has to be of type number")
         
         this.contents.push(new AudioClipSerializer({
             token: 'ITEM',
@@ -167,6 +173,12 @@ class FXChainSerializer extends BaseSerializer {
     constructor (obj) {
         super(obj);
     }
+
+    addVst(vstObj) {
+        if (! (vstObj instanceof VstSerializer)) throw new TypeError("vstObj has to be of type VstSerializer")
+        this.contents.push(vstObj);
+        return this;
+    }
 }
 
 class VstSerializer extends BaseSerializer {
@@ -177,7 +189,7 @@ class VstSerializer extends BaseSerializer {
     }
 
     dumpExternalAttribute(attr, indent){
-        if (typeof attr !== 'string') throw new Error ("attr must be of type string");
+        if (typeof attr !== 'string') throw new TypeError ("attr must be of type string");
         if (this.externalAttributes[attr]){
             return this.dumpStruct(attr, this.externalAttributes[attr], indent) + '\n';
         }
