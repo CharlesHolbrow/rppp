@@ -9,7 +9,7 @@ $ npm install rppp
 $ node
 ```
 
-```JavaScript
+```javascript
 const rppp = require('rppp');
 const result = rppp.parse('<HI "there" 1>');
 const expect = {
@@ -19,6 +19,8 @@ const expect = {
     ]
 };
 ```
+
+# Development
 
 Recommended VS Code Plugin: [PEG.js Language by Futago-za Ryuu](https://marketplace.visualstudio.com/items?itemName=futagozaryuu.pegjs-syntax)
 
