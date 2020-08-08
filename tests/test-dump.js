@@ -2,14 +2,11 @@ const mocha = require('mocha');
 const should = require('should');
 const Serializer = require('../src/serializer');
 
-const Serializers = require('../src/serializer.js')
-const Base = Serializers.BaseSerializer
-const Vst = Serializers.VstSerializer
-const Notes = Serializers.NotesSerializer
+const { ReaperProject, Base, Vst, Track, AudioClip, Notes, Tests, FXChain } = require('../src/serializer.js')
 
 describe('serializer', function() {
 
-  const serializer = new Serializers.TestsSerializer();
+  const serializer = new Tests();
 
   describe('object rule', function() {    
     // TODO: Check if reaper ever puts objects one line
@@ -118,6 +115,150 @@ describe('serializer', function() {
 
   }); // describe string rule
 
+  describe('special objects', function() {
+    const parse = input => parser.parse(input, {startRule: 'object'});
+
+    it('should dump REAPER_PROJECT objects', function() {
+      new ReaperProject({
+        token: 'REAPER_PROJECT',
+        params: [0.1, "6.13/OSX64", 1596785244],
+      }).dump().should.deepEqual('<REAPER_PROJECT 0.1 6.13/OSX64 1596785244\n>')
+    });
+
+    it('should add a track to REAPER_PROJECT objects', function() {
+      new ReaperProject({
+        token: 'REAPER_PROJECT',
+        params: [0.1, "6.13/OSX64", 1596785244],
+      }).addTrack('scream').should.deepEqual(new ReaperProject({
+        token: 'REAPER_PROJECT',
+        params: [0.1, "6.13/OSX64", 1596785244],
+        contents: [
+          new Track({
+            token: 'TRACK',
+            params: [],
+            contents: [
+              {token: 'NAME', params: [ 'scream' ]}
+            ]
+          })
+        ]
+      }))
+    });
+
+    it('should dump TRACK objects', function() {
+      new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']}
+        ]
+      }).dump().should.deepEqual('<TRACK\n  NAME scream\n>')
+    });
+
+    it('should add a track to AUDIOCLIP objects', function() {
+      new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']}
+        ]
+      }).addAudioClip(2, 0.10179138321995, __dirname + '../rpp-examples/media/909-kick.wav').should.deepEqual( new Track({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: ['scream']},
+          new AudioClip({
+            token: 'ITEM',
+            params: [],
+            contents: [
+              {token: 'POSITION', params: [2]},
+              {token: 'LENGTH', params: [0.10179138321995]},
+              new Base({
+                token: 'SOURCE', 
+                params: ['WAVE'],
+                contents: [
+                  {token: 'FILE', params: [__dirname + '../rpp-examples/media/909-kick.wav']},
+                ]
+              })
+            ]
+          })
+        ]
+      }))
+    });
+
+    it('should dump AUDIOCLIP objects', function() {
+      new AudioClip({
+        token: 'ITEM',
+        params: [],
+        contents: [
+          {token: 'POSITION', params: [2]},
+          {token: 'LENGTH', params: [10.2]},
+          new Base({
+            token: 'SOURCE', 
+            params: ['WAVE'],
+            contents: [
+              {token: 'FILE', params: ["filename"]},
+            ]
+          })
+        ]
+      }).dump().should.deepEqual('<ITEM\n  POSITION 2\n  LENGTH 10.2\n  <SOURCE WAVE\n    FILE filename\n  >\n>')
+    });
+
+    it('should dump FXCHAIN objects', function() {
+      new FXChain({
+        token: 'FXCHAIN',
+        params: [],
+        contents: [
+          {token: 'WNDRECT', params: [493, 333,1239, 676]},
+          {token: 'SHOW', params: [2]},
+          {token: 'LASTSEL', params: [1]},
+          {token: 'DOCKED', params: [0]},
+          new Vst({
+            token: 'VST',
+            params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
+                    `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,
+                    `AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0AAQRwbHVnaW5JRAABDwVUU3RlcmVvIERlbGF5AHByb2dyYW1EaXJ0eQABAQNjdXJyZW50UHJvZ3JhbQABEQVGYWN0b3J5IERlZmF1bHQAcHJvZ3JhbUlEAAABF1BBUkFNAAECaWQAAQsFZGVsYXlzeW5jAHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQcFZHJ5ZGIAdmFsdWUAAQkEAAAAAAAARMAAUEFSQU0AAQJpZAABCAVlbmFibGUAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABBwVpbnB1dAB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEQBWxjcm9zc2ZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAAAAAFBBUkFNAAECaWQAAQoFbGRlbGF5bXMAdmFsdWUAAQkEAAAAAABAf0AAUEFSQU0AAQJpZAABDAVsZGVsYXlub3RlAHZhbHVlAAEJBAAAAAAAAAhAAFBBUkFNAAECaWQAAQ4FbGRlbGF5b2Zmc2V0AHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQsFbGZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAD5AAFBBUkFNAAECaWQAAQoFbGhpZ2hjdXQAdmFsdWUAAQkEAAAAAACI00AAUEFSQU0AAQJpZAABCQVsbG93Y3V0AHZhbHVlAAEJBAAAAAAAADRAAFBBUkFNAAECaWQAAQYFbHBhbgB2YWx1ZQABCQQAAAAAAADwvwBQQVJBTQABAmlkAAEJBWxzb3VyY2UAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABEAVyY3Jvc3NmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEKBXJkZWxheW1zAHZhbHVlAAEJBAAAAAAAQH9AAFBBUkFNAAECaWQAAQwFcmRlbGF5bm90ZQB2YWx1ZQABCQQAAAAAAAAIQABQQVJBTQABAmlkAAEOBXJkZWxheW9mZnNldAB2YWx1ZQABCQQAAAAAAADwPwBQQVJBTQABAmlkAAELBXJmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAA+QABQQVJBTQABAmlkAAEKBXJoaWdoY3V0AHZhbHVlAAEJBAAAAAAAiNNAAFBBUkFNAAECaWQAAQkFcmxvd2N1dAB2YWx1ZQABCQQAAAAAAAA0QABQQVJBTQABAmlkAAEGBXJwYW4AdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABCQVyc291cmNlAHZhbHVlAAEJBAAAAAAAAABAAFBBUkFNAAECaWQAAQcFd2V0ZGIAdmFsdWUAAQkEAAAAAAAAJMAAAAAAAAAAAABKVUNFUHJpdmF0ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=`,
+                    `AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=`],
+            externalAttributes: {
+              BYPASS: [0, 0, 0],
+              PRESETNAME: ["Factory Presets: Factory Default"],
+              FLOATPOS: [0, 0, 0, 0,],
+              FXID: ["{7E06E29C-0388-DD4B-9B13-BB5F766225B7}"],
+              WAK: [0, 0],
+            },
+            contents: [],
+          })
+        ]
+    }).dump().should.deepEqual(`<FXCHAIN
+  WNDRECT 493 333 1239 676
+  SHOW 2
+  LASTSEL 1
+  DOCKED 0
+  BYPASS 0 0 0
+  <VST "VST3: #TStereo Delay (Tracktion)" "#TStereo Delay.vst3" 0 "" 1997878177{5653545344656C237473746572656F20} ""
+    oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA
+    AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEUlBST0dSQU0A
+    AQRwbHVnaW5JRAABDwVUU3RlcmVvIERlbGF5AHByb2dyYW1EaXJ0eQABAQNjdXJyZW50UHJvZ3JhbQABEQVGYWN0b3J5IERlZmF1bHQAcHJvZ3JhbUlEAAABF1BBUkFN
+    AAECaWQAAQsFZGVsYXlzeW5jAHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQcFZHJ5ZGIAdmFsdWUAAQkEAAAAAAAARMAAUEFSQU0AAQJpZAABCAVlbmFibGUA
+    dmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABBwVpbnB1dAB2YWx1ZQABCQQAAAAAAAAAAABQQVJBTQABAmlkAAEQBWxjcm9zc2ZlZWRiYWNrAHZhbHVlAAEJBAAA
+    AAAAAAAAAFBBUkFNAAECaWQAAQoFbGRlbGF5bXMAdmFsdWUAAQkEAAAAAABAf0AAUEFSQU0AAQJpZAABDAVsZGVsYXlub3RlAHZhbHVlAAEJBAAAAAAAAAhAAFBBUkFN
+    AAECaWQAAQ4FbGRlbGF5b2Zmc2V0AHZhbHVlAAEJBAAAAAAAAPA/AFBBUkFNAAECaWQAAQsFbGZlZWRiYWNrAHZhbHVlAAEJBAAAAAAAAD5AAFBBUkFNAAECaWQAAQoF
+    bGhpZ2hjdXQAdmFsdWUAAQkEAAAAAACI00AAUEFSQU0AAQJpZAABCQVsbG93Y3V0AHZhbHVlAAEJBAAAAAAAADRAAFBBUkFNAAECaWQAAQYFbHBhbgB2YWx1ZQABCQQA
+    AAAAAADwvwBQQVJBTQABAmlkAAEJBWxzb3VyY2UAdmFsdWUAAQkEAAAAAAAA8D8AUEFSQU0AAQJpZAABEAVyY3Jvc3NmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAAAAABQ
+    QVJBTQABAmlkAAEKBXJkZWxheW1zAHZhbHVlAAEJBAAAAAAAQH9AAFBBUkFNAAECaWQAAQwFcmRlbGF5bm90ZQB2YWx1ZQABCQQAAAAAAAAIQABQQVJBTQABAmlkAAEO
+    BXJkZWxheW9mZnNldAB2YWx1ZQABCQQAAAAAAADwPwBQQVJBTQABAmlkAAELBXJmZWVkYmFjawB2YWx1ZQABCQQAAAAAAAA+QABQQVJBTQABAmlkAAEKBXJoaWdoY3V0
+    AHZhbHVlAAEJBAAAAAAAiNNAAFBBUkFNAAECaWQAAQkFcmxvd2N1dAB2YWx1ZQABCQQAAAAAAAA0QABQQVJBTQABAmlkAAEGBXJwYW4AdmFsdWUAAQkEAAAAAAAA8D8A
+    UEFSQU0AAQJpZAABCQVyc291cmNlAHZhbHVlAAEJBAAAAAAAAABAAFBBUkFNAAECaWQAAQcFd2V0ZGIAdmFsdWUAAQkEAAAAAAAAJMAAAAAAAAAAAABKVUNFUHJpdmF0
+    ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=
+    AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=
+  >
+  PRESETNAME "Factory Presets: Factory Default"
+  FLOATPOS 0 0 0 0
+  FXID {7E06E29C-0388-DD4B-9B13-BB5F766225B7}
+  WAK 0 0
+>`);
+    });
+  });
 
   describe('multiline parameters', function() {
 

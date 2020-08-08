@@ -1,8 +1,5 @@
 {
-  const Serializers = require('./serializer.js')
-  const Base = Serializers.BaseSerializer
-  const Vst = Serializers.VstSerializer
-  const Notes = Serializers.NotesSerializer
+  const { ReaperProject, Base, Vst, Track, AudioClip, Notes, Tests, FXChain } = require('./serializer.js');
 }
 
 /*
@@ -15,8 +12,12 @@ Objects look like this
 ```
 Objects always have at least one struct (`<>` is not valid)
 */
-object =  (start obj: special_object end {return obj} ) / (start header: struct lines:(struct/object)* end {
-  return new Base({ token: header.token, params: header.params, contents: lines });
+object =  (start? obj: special_object end? {
+  return obj 
+} ) 
+
+/ (start header: struct contents: (struct/object)* end {
+  return new Base({ token: header.token, params: header.params, contents });
 })
 
 /*
@@ -37,17 +38,54 @@ example struct `ONE "hello" 1`
 A token is the ALL upper case name that identifes a reaper structure.
 Three example tokens: REAPER_PROJECT RIPPLE GROUPOVERRIDE
 */
-token "token" = chars:[A-Z_]+ { return chars.join(''); }
+token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 
 /*
 Parsing for special tokens
 */
-special_object = VST / NOTES
-VST = "VST" params: params crlf white* base64data: multiline_string { 
-  params.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
-  return new Vst({ token: "VST", params });
+special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOCLIP / FXCHAIN / VST
+FXCHAIN = "FXCHAIN" params: params crlf contents: (VST/struct/object)* {
+  return new FXChain({ token: "FXCHAIN", params, contents}); 
 }
-NOTES = "NOTES" crlf note: pi_string { return new Notes({ token: "NOTES", params: [ note ]}); }
+
+VST = BYPASSparams: (white* "BYPASS" p: params crlf {return p;})?
+      start? "VST" VSTparams: params crlf white* base64data: multiline_string end? 
+      PRESETNAMEparams: (white* "PRESETNAME" p: params crlf {return p;})?
+      FLOATPOSparams: (white* "FLOATPOS" p: params crlf {return p;})?
+      FXIDparams: (white* "FXID" p: params crlf {return p;})?
+      WAKparams:(white* "WAK" p: params crlf {return p;})?
+{ 
+  const returnObject = {token: "VST", externalAttributes: {}}
+  if (BYPASSparams) returnObject.externalAttributes["BYPASS"] = BYPASSparams;
+  if (PRESETNAMEparams) returnObject.externalAttributes["PRESETNAME"] = PRESETNAMEparams;
+  if (FLOATPOSparams) returnObject.externalAttributes["FLOATPOS"] = FLOATPOSparams;
+  if (FXIDparams) returnObject.externalAttributes["FXID"] = FXIDparams;
+  if (WAKparams) returnObject.externalAttributes["WAK"] = WAKparams;
+  
+  VSTparams.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
+  returnObject.params = VSTparams;
+
+  return new Vst(returnObject);
+}
+
+
+NOTES = "NOTES" crlf note: pi_string { 
+  return new Notes({ token: "NOTES", params: [ note ]}); 
+}
+TRACK = "TRACK" params:params crlf contents: (struct/object)* { 
+  return new Track({token: "TRACK", params: params, contents})
+}
+REAPER_PROJECT = "REAPER_PROJECT" params:params crlf contents: (struct/object)* { 
+  return new ReaperProject({token: "REAPER_PROJECT", params: params, contents})
+}
+AUDIOCLIP = "ITEM" params:params crlf contents:(struct/object)* & {
+  for(let line of contents){
+    if(line.token === "SOURCE" && line.params[0] === "WAVE") return true;
+  }
+  return false;
+} {
+  return new AudioClip({token: "ITEM", params: params, contents})
+}
 
 /*
 Parameters are everything after the token.
@@ -91,4 +129,4 @@ space   = " "
 white   = space / "\t"
 start   = white* "<"
 end     = white* ">" white* crlf?
-crlf    = "\n"
+crlf    = "\n" / "\r\n"

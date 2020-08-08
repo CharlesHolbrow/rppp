@@ -1,5 +1,8 @@
 const { dump } = require(".");
-
+const parser = require("./parser")
+const fs = require("fs")
+const { getAudioDurationInSeconds } = require('get-audio-duration');
+ 
 // Base class for parsing objects that are not special.
 class BaseSerializer {
     constructor (obj) {
@@ -97,44 +100,125 @@ class BaseSerializer {
     }
 }
 
-class ReaperProject extends BaseSerializer {
+class ReaperProjectSerializer extends BaseSerializer {
     // the constructor should create a parsed version of a empty reaper project
+    constructor(obj) {
+        if (obj) { super(obj); }
+        else{
+            let emptys = fs.readFileSync(__dirname + "/../rpp-examples/empty.RPP", 'utf8');
+            let empty = parser.parse(emptys)
+            super(empty);
+        }
+    }
+
+    addTrack(name) {
+        if (typeof name !== 'string') throw new Error("name has to be of type string")
+        this.contents.push(new TrackSerializer({token: "TRACK", contents: [ {token: "NAME", params: [name]} ]}))
+        return this;
+    }
 }
 
-//TODO: Implement an FXChain object handler
-class VstSerializer extends BaseSerializer {
+class TrackSerializer extends BaseSerializer {
     constructor (obj) {
         super(obj);
     }
 
+    addMidiItem() {
+
+    }
+
+    addAudioClip(position, length, filename) {
+        if (typeof filename !== 'string') throw new Error("filename has to be of type string")
+        if (typeof length !== 'number') throw new Error("position has to be of type number")
+        if (typeof position !== 'number') throw new Error("position has to be of type number")
+        
+        this.contents.push(new AudioClipSerializer({
+            token: 'ITEM',
+            params: [],
+            contents: [
+                {token: 'POSITION', params: [ position ]},
+                {token: 'LENGTH', params: [ length ]},
+                new BaseSerializer({
+                    token: 'SOURCE', 
+                    params: ['WAVE'],
+                    contents: [
+                        {token: 'FILE', params: [filename]},
+                    ]
+                })
+            ]
+        }));
+        return this;
+    }
+}
+
+class AudioClipSerializer extends BaseSerializer {
+    constructor (obj) {
+        super(obj);
+    }
+}
+
+class MidiClipSerializer extends BaseSerializer {
+    constructor (obj) {
+        super(obj);
+    }
+}
+
+class FXChainSerializer extends BaseSerializer {
+    constructor (obj) {
+        super(obj);
+    }
+}
+
+class VstSerializer extends BaseSerializer {
+    constructor (obj) {
+        super(obj);
+        if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes;
+        else this.externalAttributes = {}
+    }
+
+    dumpExternalAttribute(attr, indent){
+        if (typeof attr !== 'string') throw new Error ("attr must be of type string");
+        if (this.externalAttributes[attr]){
+            return this.dumpStruct(attr, this.externalAttributes[attr], indent) + '\n';
+        }
+        return "";
+    }
+
     dump(indent = 0) {
-        var params = this.dumpParams(this.params.slice(0, -3));
-        var res = "  ".repeat(indent) + this.token + params;
+        let params = this.dumpParams(this.params.slice(0, -3));
+        let res = this.token + params;
 
         var lines = [];
-        var start = 0;
-        var vst2 = this.params.slice(-2)[0]
+        var startIdx = 0;
+        let vst2 = this.params.slice(-2)[0]
         for (var i = 0; i < vst2.length; i++){
             if (i % 128 == 0 && i != 0){
-                lines.push(vst2.slice(start, i))
-                start = i;
+                lines.push(vst2.slice(startIdx, i))
+                startIdx = i;
             }
         }
-        if (vst2.length % 128 != 0) lines.push(vst2.slice(start, vst2.length))
+        if (vst2.length % 128 != 0) lines.push(vst2.slice(startIdx, vst2.length))
+
+        let BYPASS = this.dumpExternalAttribute("BYPASS", indent)
+        let PRESETNAME = this.dumpExternalAttribute("PRESETNAME", indent)
+        let FLOATPOS = this.dumpExternalAttribute("FLOATPOS", indent)
+        let FXID = this.dumpExternalAttribute("FXID", indent)
+        let WAK = this.dumpExternalAttribute("WAK", indent)
         
-        var start = "  ".repeat(indent) + "<" + res + '\n'
-        var vst1 = "  ".repeat(indent + 1) + this.params.slice(-3)[0] + '\n'
+        let start = "  ".repeat(indent) + "<" + res + '\n'
+        let vst1 = "  ".repeat(indent + 1) + this.params.slice(-3)[0] + '\n'
         
         var body = ""
         for (let line of lines) {
             body += "  ".repeat(indent+1) + line + '\n';
         }
 
-        var vst3 = "  ".repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
-        var end = "  ".repeat(indent) + ">";
+        let vst3 = "  ".repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
+        let end = "  ".repeat(indent) + ">";
 
-        return start + vst1 + body + vst3 + end;
+        let vstBody = start + vst1 + body + vst3 + end + '\n';
 
+        return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + WAK).slice(0, -1);
     }
 }
 
@@ -166,27 +250,6 @@ class TestsSerializer {
         this.notes = new NotesSerializer({token: "TEST"});
     }
 
-    parseObject(obj, indent = 0 /* Internal Use Only */) {
-        if (!obj.token) throw new Error('Objects need to have a token key');
-        if (typeof obj.token !== 'string') throw new Error('obj.token has to have type string');
-        if (!obj.params) throw new Error('Objects need to have a params key');
-        if (!Array.isArray(obj.params)) throw new Error('obj.params has to have type Array');
-        if (!obj.contents) throw new Error('Objects need to have a contents key');
-        if (!Array.isArray(obj.contents)) throw new Error('obj.contents has to have type Array');
-
-        /* 
-        Currently only checks for two special tokens, VST and NOTES.
-        */
-        switch(obj.token) {
-            case 'VST':
-                return this.vst.dump(obj, indent);
-            case 'NOTES':
-                return this.notes.dump(obj, indent);
-            default:
-                return this.base.dump(obj, indent);
-        }
-    }
-
     /**
      * Parses an object and dumps its representation as a string in RPP format.
      * @param {object} obj - An object of the following format containing information in an RPP file.
@@ -206,17 +269,20 @@ class TestsSerializer {
                 return this.base.dumpParams(input);
             case 'string':
                 return this.base.dumpString(input);
-            case 'object':
-                return this.parseObject(input);
             default:
-                return this.parseObject(input);
+                return input.dump();
         }
     }
 }
 
 module.exports = {
-    BaseSerializer,
-    VstSerializer,
-    NotesSerializer,
-    TestsSerializer,
+    ReaperProject: ReaperProjectSerializer,
+    Base: BaseSerializer,
+    Vst: VstSerializer,
+    Track: TrackSerializer,
+    AudioClip: AudioClipSerializer,
+    Notes: NotesSerializer,
+    Tests: TestsSerializer,
+    MidiClip: MidiClipSerializer,
+    FXChain: FXChainSerializer,
 }

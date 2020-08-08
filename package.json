@@ -17,5 +17,7 @@
     "pegjs": "^0.10.0",
     "should": "^13.2.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "get-audio-duration": "^2.0.3"
+  }
 }

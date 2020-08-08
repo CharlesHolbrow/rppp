@@ -4,4 +4,5 @@ const Serializers = require("./serializer")
 module.exports = {
     parse: parser.parse,
     serializers: Serializers,
+    project: Serializers.ReaperProject,
 };
