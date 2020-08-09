@@ -1,8 +1,8 @@
-const parser = require("./parser")
-const Serializers = require("./serializer")
+const parser = require('./parser')
+const Serializers = require('./serializer')
 
 module.exports = {
-    parse: parser.parse,
-    serializers: Serializers,
-    project: Serializers.ReaperProject,
-};
+  parse: parser.parse,
+  serializers: Serializers,
+  project: Serializers.ReaperProject
+}
