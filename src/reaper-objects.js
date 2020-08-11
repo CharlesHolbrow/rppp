@@ -333,6 +333,9 @@ class ReaperVst extends ReaperBase {
 }
 
 class ReaperNotes extends ReaperBase {
+  /**
+   * @param {ReaData} obj
+   */
   constructor (obj) {
     if (!obj) {
       obj = parser.parse(
