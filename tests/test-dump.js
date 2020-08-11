@@ -1,8 +1,17 @@
 const mocha = require('mocha');
 const should = require('should');
-const Serializer = require('../src/serializer');
 
-const { ReaperProject, Base, Vst, Track, AudioItem, MidiItem, Notes, Tests, FXChain } = require('../src/serializer.js')
+const ReaperBase = require('../src/reaper-base');
+const {
+    ReaperProject,
+    ReaperVst,
+    ReaperTrack,
+    ReaperAudioItem,
+    ReaperNotes,
+    Tests,
+    ReaperMidiItem,
+    ReaperFXChain
+} = require('../src/reaper-objects');
 
 describe('serializer', function() {
 
@@ -11,7 +20,7 @@ describe('serializer', function() {
   describe('object rule', function() {    
     // TODO: Check if reaper ever puts objects one line
     it('should dump a one line object', function() {
-      new Base({
+      new ReaperBase({
           token: 'TEST',
           params: [1],
           contents: [],
@@ -19,7 +28,7 @@ describe('serializer', function() {
     });
 
     it('should dump a multiline object with two structs', function() {
-      new Base({
+      new ReaperBase({
           token: 'NAME',
           params: ['GUITAR'],
           contents: [
@@ -29,12 +38,12 @@ describe('serializer', function() {
     });
 
     it('should dump a multiline object with two structs and an object', function() {
-      new Base({
+      new ReaperBase({
           token: 'NAME',
           params: ['GUITAR'],
           contents: [
             {token: 'VOLUME', params: [11]},
-            new Base({
+            new ReaperBase({
               token: 'METRONOME',
               params: [6, 2],
               contents: [
@@ -211,7 +220,6 @@ describe('serializer', function() {
   }); // describe string rule
 
   describe('special objects', function() {
-    const parse = input => parser.parse(input, {startRule: 'object'});
 
     it('should dump REAPER_PROJECT objects', function() {
       new ReaperProject({
@@ -224,11 +232,17 @@ describe('serializer', function() {
       new ReaperProject({
         token: 'REAPER_PROJECT',
         params: [0.1, "6.13/OSX64", 1596785244],
-      }).addTrack('scream').should.deepEqual(new ReaperProject({
+      }).addTrack(new ReaperTrack({
+        token: 'TRACK',
+        params: [],
+        contents: [
+          {token: 'NAME', params: [ 'scream' ]}
+        ]
+      })).should.deepEqual(new ReaperProject({
         token: 'REAPER_PROJECT',
         params: [0.1, "6.13/OSX64", 1596785244],
         contents: [
-          new Track({
+          new ReaperTrack({
             token: 'TRACK',
             params: [],
             contents: [
@@ -240,7 +254,7 @@ describe('serializer', function() {
     });
 
     it('should dump TRACK objects', function() {
-      new Track({
+      new ReaperTrack({
         token: 'TRACK',
         params: [],
         contents: [
@@ -249,51 +263,20 @@ describe('serializer', function() {
       }).dump().should.deepEqual('<TRACK\n  NAME scream\n>')
     });
 
-    it('should add an AudioItem to TRACK objects', function() {
-      new Track({
+    it('should add an ReaperAudioItem to TRACK objects', function() {
+      new ReaperTrack({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']}
         ]
-      }).addAudioItem(2, 0.10179138321995, __dirname + '../rpp-examples/media/909-kick.wav').should.deepEqual( new Track({
-        token: 'TRACK',
-        params: [],
-        contents: [
-          {token: 'NAME', params: ['scream']},
-          new AudioItem({
-            token: 'ITEM',
-            params: [],
-            contents: [
-              {token: 'POSITION', params: [2]},
-              {token: 'LENGTH', params: [0.10179138321995]},
-              new Base({
-                token: 'SOURCE', 
-                params: ['WAVE'],
-                contents: [
-                  {token: 'FILE', params: [__dirname + '../rpp-examples/media/909-kick.wav']},
-                ]
-              })
-            ]
-          })
-        ]
-      }))
-    });
-
-    it('should add an AudioItem object to TRACK objects', function() {
-      new Track({
-        token: 'TRACK',
-        params: [],
-        contents: [
-          {token: 'NAME', params: ['scream']}
-        ]
-      }).addAudioItemFromObject(new AudioItem({
+      }).addAudioItem(new ReaperAudioItem({
         token: 'ITEM',
         params: [],
         contents: [
           {token: 'POSITION', params: [2]},
           {token: 'LENGTH', params: [0.10179138321995]},
-          new Base({
+          new ReaperBase({
             token: 'SOURCE', 
             params: ['WAVE'],
             contents: [
@@ -301,18 +284,18 @@ describe('serializer', function() {
             ]
           })
         ]
-      })).should.deepEqual( new Track({
+      })).should.deepEqual(new ReaperTrack({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']},
-          new AudioItem({
+          new ReaperAudioItem({
             token: 'ITEM',
             params: [],
             contents: [
               {token: 'POSITION', params: [2]},
               {token: 'LENGTH', params: [0.10179138321995]},
-              new Base({
+              new ReaperBase({
                 token: 'SOURCE', 
                 params: ['WAVE'],
                 contents: [
@@ -324,55 +307,21 @@ describe('serializer', function() {
         ]
       }))
     });
-
-    it('should add a MidiItem notes object to TRACK objects', function() {
-      new Track({
-        token: 'TRACK',
-        params: [],
-        contents: [
-          {token: 'NAME', params: ['scream']}
-        ]
-      }).addMidiItemFromNotes('TEST', 0, 5, [ {n: 5, s: 0, l: 2} ]).should.deepEqual(new Track({
-        token: 'TRACK',
-        params: [],
-        contents: [
-          {token: 'NAME', params: ['scream']},
-          new MidiItem({
-            token: 'ITEM',
-            params: [],
-            contents: [
-              {token: 'POSITION', params: [0]},
-              {token: 'LENGTH', params: [5]},
-              {token: 'NAME', params: ['TEST'] },
-              new Base({
-                token: 'SOURCE', 
-                params: ['MIDI'],
-                contents: [
-                  {token: 'HASDATA', params: [1, 960, 'QN']},
-                  {token: 'E', params: [0, '90', '05', '40']},
-                  {token: 'E', params: [960 * 4 * 2, '80', '05', '00']}
-                ] 
-              })
-            ]
-          })
-        ]
-      }))
-    });
     
-    it('should add an MidiItem object to TRACK objects', function() {
-      new Track({
+    it('should add an ReaperMidiItem object to TRACK objects', function() {
+      new ReaperTrack({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']}
         ]
-      }).addMidiItemFromObject(new MidiItem({
+      }).addMidiItem(new ReaperMidiItem({
         token: 'ITEM',
         params: [],
         contents: [
           {token: 'POSITION', params: [2]},
           {token: 'LENGTH', params: [2]},
-          new Base({
+          new ReaperBase({
             token: 'SOURCE', 
             params: ['MIDI'],
             contents: [
@@ -383,18 +332,18 @@ describe('serializer', function() {
             ]
           })
         ]
-      })).should.deepEqual(new Track({
+      })).should.deepEqual(new ReaperTrack({
         token: 'TRACK',
         params: [],
         contents: [
           {token: 'NAME', params: ['scream']},
-          new MidiItem({
+          new ReaperMidiItem({
             token: 'ITEM',
             params: [],
             contents: [
               {token: 'POSITION', params: [2]},
               {token: 'LENGTH', params: [2]},
-              new Base({
+              new ReaperBase({
                 token: 'SOURCE', 
                 params: ['MIDI'],
                 contents: [
@@ -410,14 +359,14 @@ describe('serializer', function() {
       }))
     });
 
-    it('should dump MidiItem objects', function() {
-      new MidiItem({
+    it('should dump ReaperMidiItem objects', function() {
+      new ReaperMidiItem({
         token: 'ITEM',
         params: [],
         contents: [
           {token: 'POSITION', params: [2]},
           {token: 'LENGTH', params: [2]},
-          new Base({
+          new ReaperBase({
             token: 'SOURCE', 
             params: ['MIDI'],
             contents: [
@@ -444,14 +393,14 @@ describe('serializer', function() {
 >`)
     });
 
-    it('should dump AudioItem objects', function() {
-      new AudioItem({
+    it('should dump ReaperAudioItem objects', function() {
+      new ReaperAudioItem({
         token: 'ITEM',
         params: [],
         contents: [
           {token: 'POSITION', params: [2]},
           {token: 'LENGTH', params: [10.2]},
-          new Base({
+          new ReaperBase({
             token: 'SOURCE', 
             params: ['WAVE'],
             contents: [
@@ -463,7 +412,7 @@ describe('serializer', function() {
     });
 
     it('should add a VST to FXCHAIN objects', function() {
-      new FXChain({
+      new ReaperFXChain({
         token: 'FXCHAIN',
         params: [],
         contents: [
@@ -472,7 +421,7 @@ describe('serializer', function() {
           {token: 'LASTSEL', params: [1]},
           {token: 'DOCKED', params: [0]},
         ]
-      }).addVst(new Vst({
+      }).addVst(new ReaperVst({
         token: 'VST',
         params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
                 `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,
@@ -486,7 +435,7 @@ describe('serializer', function() {
           WAK: [0, 0],
         },
         contents: [],
-      })).should.deepEqual(new FXChain({
+      })).should.deepEqual(new ReaperFXChain({
         token: 'FXCHAIN',
         params: [],
         contents: [
@@ -494,7 +443,7 @@ describe('serializer', function() {
           {token: 'SHOW', params: [2]},
           {token: 'LASTSEL', params: [1]},
           {token: 'DOCKED', params: [0]},
-          new Vst({
+          new ReaperVst({
             token: 'VST',
             params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
                     `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,
@@ -514,7 +463,7 @@ describe('serializer', function() {
     });
 
     it('should dump FXCHAIN objects', function() {
-      new FXChain({
+      new ReaperFXChain({
         token: 'FXCHAIN',
         params: [],
         contents: [
@@ -522,7 +471,7 @@ describe('serializer', function() {
           {token: 'SHOW', params: [2]},
           {token: 'LASTSEL', params: [1]},
           {token: 'DOCKED', params: [0]},
-          new Vst({
+          new ReaperVst({
             token: 'VST',
             params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
                     `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,
@@ -572,8 +521,8 @@ describe('serializer', function() {
 
   describe('multiline parameters', function() {
 
-    it('should dump NOTES objects', function() {
-      new Notes({
+    it('should dump ReaperNOTES objects', function() {
+      new ReaperNotes({
           token: 'NOTES',
           params: ['| Line one with extra pipes |\n Second Line'],
           contents: [],
@@ -581,7 +530,7 @@ describe('serializer', function() {
     });
 
     it('should dump strings that start with a string delimiter and contain all delimiters', () => {
-      new Base({
+      new ReaperBase({
           token: 'NAME',
           params: [`'''\`\`\`"""`,],
           contents: [],
@@ -589,7 +538,7 @@ describe('serializer', function() {
     });
 
     it('should dump VSTs/Plugins containing Base64', function() {
-      new Vst({
+      new ReaperVst({
           token: 'VST',
           params: ['VST3: #TStereo Delay (Tracktion)', '#TStereo Delay.vst3', 0, '', '1997878177{5653545344656C237473746572656F20}', '',
                   `oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA`,

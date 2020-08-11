@@ -1,5 +1,5 @@
 {
-  const { ReaperProject, Base, Vst, Track, AudioItem, Notes, Tests, FXChain, MidiItem } = require('./serializer.js');
+  const ReaperBase = require('./reaper-base.js');
 }
 
 /*
@@ -12,20 +12,19 @@ Objects look like this
 ```
 Objects always have at least one struct (`<>` is not valid)
 */
-object =  (start? obj: special_object end? {
-  return obj 
-} ) 
-
+object = (start o: multiline_objects end {
+  return o;
+})
 / (start header: struct contents: (struct/object)* end {
-  return new Base({ token: header.token, params: header.params, contents });
+  return new ReaperBase({ token: header.token, params: header.params, contents });
 })
 
-/*
-Tokens that require special parsing, e.g. VST, NOTES
-*/
-struct = (white* token:token params:params crlf start token crlf pipe_string: pi_string end { 
+struct = (white* token_1:token params:params crlf start token_2:token crlf pipe_string: pi_string end 
+& {
+  return token_1 === token_2;
+} { 
   params[0] = pipe_string; 
-  return {token, params};
+  return {token: token_1, params};
 })
 
 /*
@@ -40,59 +39,14 @@ Three example tokens: REAPER_PROJECT RIPPLE GROUPOVERRIDE
 */
 token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 
-/*
-Parsing for special tokens
-*/
-special_object = NOTES / TRACK / REAPER_PROJECT / AUDIOITEM / MIDIITEM / FXCHAIN / VST
-FXCHAIN = "FXCHAIN" params: params crlf contents: (VST/struct/object)* {
-  return new FXChain({ token: "FXCHAIN", params, contents}); 
-}
-
-VST = BYPASSparams: (white* "BYPASS" p: params crlf {return p;})?
-      start? "VST" VSTparams: params crlf white* base64data: multiline_string end? 
-      PRESETNAMEparams: (white* "PRESETNAME" p: params crlf {return p;})?
-      FLOATPOSparams: (white* "FLOATPOS" p: params crlf {return p;})?
-      FXIDparams: (white* "FXID" p: params crlf {return p;})?
-      WAKparams:(white* "WAK" p: params crlf {return p;})?
+multiline_objects = NOTES / VST
+VST = "VST" params: params crlf white* base64data: multiline_string 
 { 
-  const returnObject = {token: "VST", externalAttributes: {}}
-  if (BYPASSparams) returnObject.externalAttributes["BYPASS"] = BYPASSparams;
-  if (PRESETNAMEparams) returnObject.externalAttributes["PRESETNAME"] = PRESETNAMEparams;
-  if (FLOATPOSparams) returnObject.externalAttributes["FLOATPOS"] = FLOATPOSparams;
-  if (FXIDparams) returnObject.externalAttributes["FXID"] = FXIDparams;
-  if (WAKparams) returnObject.externalAttributes["WAK"] = WAKparams;
-
-  VSTparams.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
-  returnObject.params = VSTparams;
-
-  return new Vst(returnObject);
+  params.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
+  return new ReaperBase({ token: "VST", params: params});
 }
-
-
 NOTES = "NOTES" crlf note: pi_string { 
-  return new Notes({ token: "NOTES", params: [ note ]}); 
-}
-TRACK = "TRACK" params:params crlf contents: (struct/object)* { 
-  return new Track({token: "TRACK", params: params, contents})
-}
-REAPER_PROJECT = "REAPER_PROJECT" params:params crlf contents: (struct/object)* { 
-  return new ReaperProject({token: "REAPER_PROJECT", params: params, contents})
-}
-AUDIOITEM = "ITEM" params:params crlf contents:(struct/object)* & {
-  for(let line of contents){
-    if(line.token === "SOURCE" && line.params[0] === "WAVE") return true;
-  }
-  return false;
-} {
-  return new AudioItem({token: "ITEM", params: params, contents})
-}
-MIDIITEM = "ITEM" params:params crlf contents:(struct/object)* & {
-  for(let line of contents){
-    if(line.token === "SOURCE" && line.params[0] === "MIDI") return true;
-  }
-  return false;
-} {
-  return new MidiItem({token: "ITEM", params: params, contents})
+  return new ReaperBase({ token: "NOTES", params: [ note ]}); 
 }
 
 /*
@@ -103,6 +57,7 @@ This rule expects every param to be preceeded by a space
 */
 param  "param"  = space p:(decimal !char_nosp / int !char_nosp / string !char_nosp)  { return p[0]; }
 params "params" = param*
+
 /*
 Some parameters span multiple lines
 */
