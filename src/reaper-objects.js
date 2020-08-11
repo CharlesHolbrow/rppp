@@ -1,8 +1,9 @@
-const parser = require('./parser');
-const fs = require('fs');
-const ReaperBase = require('./reaper-base');
+const parser = require('./parser')
+const fs = require('fs')
+const ReaperBase = require('./reaper-base')
+const path = require('path')
 
-const emptys = fs.readFileSync(__dirname + '/../rpp-examples/empty.RPP', 'utf8');
+const emptys = fs.readFileSync(path.join(__dirname, '../rpp-examples/empty.RPP'), 'utf8')
 
 /**
  * @typedef {Object} ReaData
@@ -15,10 +16,10 @@ class ReaperProject extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (obj) super(obj);  
+    if (obj) super(obj)
     else {
       const empty = parser.parse(emptys)
-      super(empty);
+      super(empty)
     }
   }
 
@@ -27,7 +28,7 @@ class ReaperProject extends ReaperBase {
    */
   addTrack (trackObj) {
     if (!(trackObj instanceof ReaperTrack)) throw new TypeError('trackObj has to be of type ReaperTrack')
-    return this.add(trackObj);
+    return this.add(trackObj)
   }
 }
 
@@ -36,12 +37,12 @@ class ReaperTrack extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (!obj){
+    if (!obj) {
       obj = parser.parse(
 `<TRACK
 >`)
     }
-    super(obj);
+    super(obj)
   }
 
   /**
@@ -49,7 +50,7 @@ class ReaperTrack extends ReaperBase {
    */
   addMidiItem (midiObj) {
     if (!(midiObj instanceof ReaperMidiItem)) throw new TypeError('midiObj has to be of type ReaperMidiItem')
-    return this.add(midiObj);
+    return this.add(midiObj)
   }
 
   /**
@@ -57,7 +58,7 @@ class ReaperTrack extends ReaperBase {
    */
   addAudioItem (audioObj) {
     if (!(audioObj instanceof ReaperAudioItem)) throw new TypeError('audioObj has to be of type ReaperAudioItem')
-    return this.add(audioObj);
+    return this.add(audioObj)
   }
 }
 
@@ -66,7 +67,7 @@ class ReaperAudioItem extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (!obj){
+    if (!obj) {
       obj = parser.parse(
 `<ITEM
 POSITION 0
@@ -76,7 +77,7 @@ NAME "untitled WAVE item"
   >
 >`)
     }
-    super(obj);
+    super(obj)
   }
 }
 
@@ -85,7 +86,7 @@ class ReaperMidiItem extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (!obj){
+    if (!obj) {
       obj = parser.parse(
 `<ITEM
 POSITION 0
@@ -95,9 +96,9 @@ NAME "untitled MIDI item"
   >
 >`)
     }
-    super(obj);
+    super(obj)
 
-    for (let i in obj.contents) {
+    for (const i in obj.contents) {
       if (this.contents[i].token === 'SOURCE' && this.contents[i].params[0] === 'MIDI') {
         this.contents[i] = ReaperMidiItem.cleanMidi(this.contents[i])
       }
@@ -110,7 +111,7 @@ NAME "untitled MIDI item"
    *
    * @param {MidiNote[]} midiArray
    * @param {Object} midiSettings
-   * 
+   *
    * Outputs something like this:
    * [
    *   {token: 'HASDATA', params: [1, 960, 'QN']},
@@ -131,7 +132,7 @@ NAME "untitled MIDI item"
     const midiMessage = [{ token: 'HASDATA', params: [1, midiSettings.ticksQN, 'QN'] }]
 
     /**
-     * Function for cleaning input and generating a Reaper midi message. 
+     * Function for cleaning input and generating a Reaper midi message.
      */
     const note = (offset, channelAndStatus, midin, midiv) => {
       const res = []
@@ -144,7 +145,7 @@ NAME "untitled MIDI item"
       res.push(channelAndStatus)
       res.push(midin)
 
-      if (channelAndStatus[0] == '8') res.push('00')
+      if (channelAndStatus[0] === '8') res.push('00')
       else res.push(midiv)
 
       return res
@@ -165,13 +166,12 @@ NAME "untitled MIDI item"
     for (var i = 0; i < 16; i++) {
       for (var j = 0; j < 128; j++) {
         if (midiStatus[i][j].length > 1) {
-
           // Sort by the message time
           midiStatus[i][j].sort(function compare (a, b) {
             return a[0] - b[0]
           })
 
-          // Loop through each start/stop command and generate its corresponding midi message. 
+          // Loop through each start/stop command and generate its corresponding midi message.
           for (var k = 1; k < midiStatus[i][j].length; k++) {
             const channel = i.toString(16)
             if (channel.length > 1) throw new Error('midi channel has to be between 0 and 15')
@@ -201,7 +201,7 @@ NAME "untitled MIDI item"
 
   /**
    * Some numbers in the midi note should actually be strings and have to be cleaned.
-   * @param {ReaData} obj 
+   * @param {ReaData} obj
    */
   static cleanMidi (obj) {
     for (var i = 0; i < obj.contents.length; i++) {
@@ -223,7 +223,7 @@ class ReaperFXChain extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (!obj){
+    if (!obj) {
       obj = parser.parse(
 `<FXCHAIN
   SHOW 0
@@ -231,40 +231,39 @@ class ReaperFXChain extends ReaperBase {
   DOCKED 0
 >`)
     }
-    super(obj);
+    super(obj)
 
     // look for VST's external attributes
-    let cleaned_contents = []
-    let i = 0;
-    for(; i < obj.contents.length; i++){
-      if(obj.contents[i].token === 'VST') {
-        let VstObj = new ReaperVst(obj.contents[i]);
+    const cleanedContents = []
+    let i = 0
+    for (; i < obj.contents.length; i++) {
+      if (obj.contents[i].token === 'VST') {
+        const VstObj = new ReaperVst(obj.contents[i])
 
-        if(i !== 0 && obj.contents[i-1].token === 'BYPASS'){
-          VstObj.externalAttributes['BYPASS'] = obj.contents[i-1].params;
-          cleaned_contents.pop();
+        if (i !== 0 && obj.contents[i - 1].token === 'BYPASS') {
+          VstObj.externalAttributes.BYPASS = obj.contents[i - 1].params
+          cleanedContents.pop()
         }
 
-        let toSkip = 0;
-        for(let j = 1; j < 5 && i + j < obj.contents.length; j++){
-          if(['BYPASS', 'PRESETNAME', 'FLOATPOS', 'FXID', 'WAK'].includes(obj.contents[i+j].token)){
-            VstObj.externalAttributes[obj.contents[i+j].token] = obj.contents[i+j].params;
+        let toSkip = 0
+        for (let j = 1; j < 5 && i + j < obj.contents.length; j++) {
+          if (['BYPASS', 'PRESETNAME', 'FLOATPOS', 'FXID', 'WAK'].includes(obj.contents[i + j].token)) {
+            VstObj.externalAttributes[obj.contents[i + j].token] = obj.contents[i + j].params
             toSkip += 1
           }
-          if (obj.contents[i+j].token === 'VST' && j != 0){
-            break;
+          if (obj.contents[i + j].token === 'VST' && j !== 0) {
+            break
           }
         }
-        
-        cleaned_contents.push(VstObj);
-        i += toSkip;
-      }
-      else{
-        cleaned_contents.push(obj.contents[i]);
+
+        cleanedContents.push(VstObj)
+        i += toSkip
+      } else {
+        cleanedContents.push(obj.contents[i])
       }
     }
-    
-    obj.contents = cleaned_contents;
+
+    obj.contents = cleanedContents
   }
 
   /**
@@ -272,7 +271,7 @@ class ReaperFXChain extends ReaperBase {
    */
   addVst (vstObj) {
     if (!(vstObj instanceof ReaperVst)) throw new TypeError('vstObj has to be of type ReaperVst')
-    return this.add(vstObj);
+    return this.add(vstObj)
   }
 }
 
@@ -295,52 +294,52 @@ class ReaperVst extends ReaperBase {
   }
 
   dump (indent = 0) {
-    const params = ReaperBase.dumpParams(this.params.slice(0, -3));
-    const res = this.token + params;
+    const params = ReaperBase.dumpParams(this.params.slice(0, -3))
+    const res = this.token + params
 
-    var lines = [];
-    var startIdx = 0;
-    const vst2 = this.params.slice(-2)[0];
+    var lines = []
+    var startIdx = 0
+    const vst2 = this.params.slice(-2)[0]
     for (var i = 0; i < vst2.length; i++) {
-      if (i % 128 == 0 && i != 0) {
-        lines.push(vst2.slice(startIdx, i));
-        startIdx = i;
+      if (i % 128 === 0 && i !== 0) {
+        lines.push(vst2.slice(startIdx, i))
+        startIdx = i
       }
     }
-    if (vst2.length % 128 != 0) lines.push(vst2.slice(startIdx, vst2.length));
+    if (vst2.length % 128 !== 0) lines.push(vst2.slice(startIdx, vst2.length))
 
     // These attributes correspond to the VST object, not the FXChain object.
-    const BYPASS = this.dumpExternalAttribute('BYPASS', indent);
-    const PRESETNAME = this.dumpExternalAttribute('PRESETNAME', indent);
-    const FLOATPOS = this.dumpExternalAttribute('FLOATPOS', indent);
-    const FXID = this.dumpExternalAttribute('FXID', indent);
-    const WAK = this.dumpExternalAttribute('WAK', indent);
+    const BYPASS = this.dumpExternalAttribute('BYPASS', indent)
+    const PRESETNAME = this.dumpExternalAttribute('PRESETNAME', indent)
+    const FLOATPOS = this.dumpExternalAttribute('FLOATPOS', indent)
+    const FXID = this.dumpExternalAttribute('FXID', indent)
+    const WAK = this.dumpExternalAttribute('WAK', indent)
 
-    const start = '  '.repeat(indent) + '<' + res + '\n';
-    const vst1 = '  '.repeat(indent + 1) + this.params.slice(-3)[0] + '\n';
+    const start = '  '.repeat(indent) + '<' + res + '\n'
+    const vst1 = '  '.repeat(indent + 1) + this.params.slice(-3)[0] + '\n'
 
-    var body = '';
+    var body = ''
     for (const line of lines) {
-      body += '  '.repeat(indent + 1) + line + '\n';
+      body += '  '.repeat(indent + 1) + line + '\n'
     }
 
-    const vst3 = '  '.repeat(indent + 1) + this.params.slice(-1)[0] + '\n';
-    const end = '  '.repeat(indent) + '>';
+    const vst3 = '  '.repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
+    const end = '  '.repeat(indent) + '>'
 
-    const vstBody = start + vst1 + body + vst3 + end + '\n';
+    const vstBody = start + vst1 + body + vst3 + end + '\n'
 
-    return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + WAK).slice(0, -1);
+    return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + WAK).slice(0, -1)
   }
 }
 
 class ReaperNotes extends ReaperBase {
   constructor (obj) {
-    if (!obj){
+    if (!obj) {
       obj = parser.parse(
 `<NOTES
 >`)
     }
-    super(obj);
+    super(obj)
   }
 
   dump (indent = 0) {

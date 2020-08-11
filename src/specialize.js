@@ -1,15 +1,14 @@
-const ReaperBase = require('./reaper-base');
+const ReaperBase = require('./reaper-base')
 const {
-    ReaperProject,
-    ReaperVst,
-    ReaperTrack,
-    ReaperAudioItem,
-    ReaperNotes,
-    Tests,
-    ReaperMidiItem,
-    ReaperFXChain
-} = require('./reaper-objects');
-const reaperObjects = require('./reaper-objects');
+  ReaperProject,
+  ReaperVst,
+  ReaperTrack,
+  ReaperAudioItem,
+  ReaperNotes,
+  ReaperMidiItem,
+  ReaperFXChain
+} = require('./reaper-objects')
+const reaperObjects = require('./reaper-objects')
 
 /**
  * @typedef {Object} ReaData
@@ -18,31 +17,48 @@ const reaperObjects = require('./reaper-objects');
  * @property {ReaData[]} [contents] optional contents
  */
 function specialize (obj) {
-    if (!(obj instanceof ReaperBase)) return obj;
+  if (!(obj instanceof ReaperBase)) return obj
 
-    switch (obj.token) {
-        case 'NOTES':
-            obj = new ReaperNotes(obj);
-        case 'TRACK':
-            obj = new ReaperTrack(obj);
-        case 'REAPER_PROJECT':
-            obj = new ReaperProject(obj);
-        case 'ITEM':
-            if (obj.params[0] === 'WAVE') {
-                obj = new ReaperAudioItem(obj);
-            } else if (obj.params[0] === 'MIDI'){
-                obj = new ReaperMidiItem(obj);
-            }
-        case 'VST':
-            obj = new ReaperVst(obj);
-        case 'FXCHAIN':
-            obj = new ReaperFXChain(obj);
-    }
+  switch (obj.token) {
+    case 'NOTES':
+      obj = new ReaperNotes(obj)
+      break
+    case 'TRACK':
+      obj = new ReaperTrack(obj)
+      break
+    case 'REAPER_PROJECT':
+      obj = new ReaperProject(obj)
+      break
+    case 'ITEM':
+      for (const i in obj.contents) {
+        if (obj.contents[i].token === 'SOURCE') {
+          if (obj.contents[i].params[0] === 'MIDI') {
+            obj = new ReaperMidiItem(obj)
+          } else if (obj.contents[i].params[0] === 'WAVE') {
+            obj = new ReaperAudioItem(obj)
+          }
+        }
+      }
+      if (obj.params[0] === 'WAVE') {
+        obj = new ReaperAudioItem(obj)
+      } else if (obj.params[0] === 'MIDI') {
+        obj = new ReaperMidiItem(obj)
+      }
+      break
+    case 'VST':
+      obj = new ReaperVst(obj)
+      break
+    case 'FXCHAIN':
+      obj = new ReaperFXChain(obj)
+      break
+    default:
+      break
+  }
 
-    for (let i in obj.contents) {
-        obj.contents[i] = specialize(obj.contents[i]);
-    }
-    return obj;
+  for (const i in obj.contents) {
+    obj.contents[i] = specialize(obj.contents[i])
+  }
+  return obj
 }
 
-module.exports = specialize;
+module.exports = specialize
