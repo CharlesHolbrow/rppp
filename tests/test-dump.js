@@ -47,6 +47,67 @@ describe('dump', function () {
         ]
       }).dump().should.equal('<NAME GUITAR\n  VOLUME 11\n  <METRONOME 6 2\n    VOL 0.25 0.125\n  >\n>')
     })
+
+    it('should get the correct object', function () {
+      new ReaperBase({
+        token: 'NAME',
+        params: ['GUITAR'],
+        contents: [
+          { token: 'VOLUME', params: [11] },
+          new ReaperBase({
+            token: 'METRONOME',
+            params: [6, 2],
+            contents: [
+              { token: 'VOL', params: [0.25, 0.125] }
+            ]
+          })
+        ]
+      }).getByToken('METRONOME', 0).should.deepEqual(
+        new ReaperBase({
+          token: 'METRONOME',
+          params: [6, 2],
+          contents: [
+            { token: 'VOL', params: [0.25, 0.125] }
+          ]
+        })
+      )
+    })
+
+    it('should get the correct object', function () {
+      let testObj = new ReaperBase({
+        token: 'NAME',
+        params: ['GUITAR'],
+        contents: [
+          { token: 'VOLUME', params: [11] },
+          new ReaperBase({
+            token: 'METRONOME',
+            params: [6, 2],
+            contents: [
+              { token: 'VOL', params: [0.25, 0.125] }
+            ]
+          })
+        ]
+      })
+      
+      testObj.getByToken('METRONOME', 0).params[0] = 10;
+      
+      testObj.should.deepEqual(
+        new ReaperBase({
+          token: 'NAME',
+          params: ['GUITAR'],
+          contents: [
+            { token: 'VOLUME', params: [11] },
+            new ReaperBase({
+              token: 'METRONOME',
+              params: [10, 2],
+              contents: [
+                { token: 'VOL', params: [0.25, 0.125] }
+              ]
+            })
+          ]
+        })
+      )
+    })
   }) // Describe object Rule
 
   describe('midi message rule', function () {

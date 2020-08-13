@@ -25,6 +25,37 @@ class ReaperBase {
   }
 
   /**
+   * Gets the `index`'th struct with token `token` and returns the object.
+   * If the `index`'th struct was not found, then create a token and push 
+   * it to the end of the contents array.
+   * @param {string} token
+   * @param {number} index
+   */
+  getOrCreateStructByToken (token, index = 0) {
+    let found = 0;
+    for (let obj of this.contents){
+      if (obj.token === token){
+        if (found === index) {
+          return obj;
+        }
+        found += 1;
+      }
+    }
+    return this.createStruct(token, this.contents.length);
+  }
+
+  /**
+   * Creates a struct with token `token` at index `index`.
+   * @param {string} token
+   * @param {number} index
+   */
+  createStruct(token, index = 0){
+    var obj = {'token': token, params: []};    
+    this.contents.splice(index, 0, obj);
+    return this.contents[index];
+  }
+
+  /**
      * Adds a ReaData object to the contents array of this object.
      * @param {ReaData} obj
      */
@@ -53,7 +84,7 @@ class ReaperBase {
     return i.toString()
   }
 
-  static dumpString (s, indent) {
+  static dumpString (s) {
     if (typeof s !== 'string') throw new TypeError('dumpString was not passed a string')
 
     if (s.includes(' ') || s.length === 0 || s[0] === '"' || s[0] === '`' || s[0] === "'") {
