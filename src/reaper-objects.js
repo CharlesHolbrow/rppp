@@ -1,6 +1,7 @@
 const parser = require('./parser')
 const fs = require('fs')
 const ReaperBase = require('./reaper-base')
+const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../rpp-examples/empty.RPP'), 'utf8')
@@ -342,7 +343,7 @@ class ReaperNotes extends ReaperBase {
 `<NOTES
 >`)
     }
-    super(obj)
+    super(obj);
   }
 
   dump (indent = 0) {
@@ -354,6 +355,28 @@ class ReaperNotes extends ReaperBase {
     }
     var end = '  '.repeat(indent) + '>'
     return start + body + end
+  }
+}
+
+class ReaperVolumeAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<VOLENV2
+>`)
+    }
+    super(obj);
+  }
+}
+
+class ReaperPanAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<PANENV2
+>`)
+    }
+    super(obj);
   }
 }
 
@@ -396,5 +419,7 @@ module.exports = {
   ReaperNotes,
   Tests,
   ReaperMidiItem,
-  ReaperFXChain
+  ReaperFXChain,
+  ReaperVolumeAutomation,
+  ReaperPanAutomation,
 }
