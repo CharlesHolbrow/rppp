@@ -4,7 +4,7 @@ const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
 
-const emptys = fs.readFileSync(path.join(__dirname, '../rpp-examples/empty.RPP'), 'utf8')
+const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
 /**
  * @typedef {Object} ReaData

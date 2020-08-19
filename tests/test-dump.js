@@ -62,7 +62,7 @@ describe('dump', function () {
             ]
           })
         ]
-      }).getByToken('METRONOME', 0).should.deepEqual(
+      }).getOrCreateStructByToken('METRONOME', 0).should.deepEqual(
         new ReaperBase({
           token: 'METRONOME',
           params: [6, 2],
@@ -89,7 +89,7 @@ describe('dump', function () {
         ]
       })
       
-      testObj.getByToken('METRONOME', 0).params[0] = 10;
+      testObj.getOrCreateStructByToken('METRONOME', 0).params[0] = 10;
       
       testObj.should.deepEqual(
         new ReaperBase({
