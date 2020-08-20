@@ -62,7 +62,7 @@ describe('dump', function () {
             ]
           })
         ]
-      }).getByToken('METRONOME', 0).should.deepEqual(
+      }).getOrCreateStructByToken('METRONOME', 0).should.deepEqual(
         new ReaperBase({
           token: 'METRONOME',
           params: [6, 2],
@@ -89,7 +89,7 @@ describe('dump', function () {
         ]
       })
       
-      testObj.getByToken('METRONOME', 0).params[0] = 10;
+      testObj.getOrCreateStructByToken('METRONOME', 0).params[0] = 10;
       
       testObj.should.deepEqual(
         new ReaperBase({
@@ -128,19 +128,13 @@ describe('dump', function () {
       dump([
         { n: 5, s: 0, l: 0.25 },
         { n: 6, s: 0.25, l: 0.25 },
-        { n: 7, s: 1, l: 0.25 },
-        { n: 7, s: 1.25, l: 0.25 }
-      ]).should.containDeep(
+      ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
           { token: 'E', params: [960, '80', '05', '00'] },
-          { token: 'E', params: [960, '90', '06', '40'] },
+          { token: 'E', params: [0, '90', '06', '40'] },
           { token: 'E', params: [960, '80', '06', '00'] },
-          { token: 'E', params: [960 * 4, '90', '07', '40'] },
-          { token: 'E', params: [960, '80', '07', '00'] },
-          { token: 'E', params: [0, '90', '07', '40'] },
-          { token: 'E', params: [960, '80', '07', '00'] }
         ]
       )
     })
@@ -153,9 +147,9 @@ describe('dump', function () {
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
-          { token: 'E', params: [960 * 4 * 2, '80', '05', '00'] },
           { token: 'E', params: [0, '90', '06', '40'] },
-          { token: 'E', params: [960 * 4 * 2, '80', '06', '00'] }
+          { token: 'E', params: [960 * 4 * 2, '80', '05', '00'] },
+          { token: 'E', params: [0, '80', '06', '00'] }
         ]
       )
     })
@@ -164,12 +158,12 @@ describe('dump', function () {
       dump([
         { n: 5, s: 0, l: 2 },
         { n: 5, s: 1, l: 2 }
-      ]).should.containDeep(
+      ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
-          { token: 'E', params: [3840, '80', '05', '00'] },
           { token: 'E', params: [3840, '90', '05', '40'] },
+          { token: 'E', params: [3840, '80', '05', '00'] },
           { token: 'E', params: [3840, '80', '05', '00'] }
         ]
       )
@@ -179,12 +173,12 @@ describe('dump', function () {
       dump([
         { n: 5, s: 1, l: 2 },
         { n: 5, s: 0, l: 2 }
-      ]).should.containDeep(
+      ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
-          { token: 'E', params: [3840, '80', '05', '00'] },
           { token: 'E', params: [3840, '90', '05', '40'] },
+          { token: 'E', params: [3840, '80', '05', '00'] },
           { token: 'E', params: [3840, '80', '05', '00'] }
         ]
       )
@@ -194,13 +188,13 @@ describe('dump', function () {
       dump([
         { c: 0, n: 5, s: 0, l: 0.25 },
         { c: 1, n: 5, s: 0, l: 0.25 }
-      ]).should.containDeep(
+      ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
-          { token: 'E', params: [960, '80', '05', '00'] },
           { token: 'E', params: [0, '91', '05', '40'] },
-          { token: 'E', params: [960, '81', '05', '00'] }
+          { token: 'E', params: [960, '80', '05', '00']},
+          { token: 'E', params: [0, '81', '05', '00'] },
         ]
       )
     })
@@ -208,7 +202,7 @@ describe('dump', function () {
     it('should work for a message with notes with different velocities', function () {
       dump([
         { c: 0, n: 5, s: 0, l: 0.25, v: 2 }
-      ]).should.containDeep(
+      ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '02'] },

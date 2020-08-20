@@ -4,7 +4,7 @@ const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
 
-const emptys = fs.readFileSync(path.join(__dirname, '../rpp-examples/empty.RPP'), 'utf8')
+const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
 /**
  * @typedef {Object} ReaData
@@ -153,49 +153,44 @@ NAME "untitled MIDI item"
     }
 
     // Generate a 3D array to store start/stop times for each note on each channel.
-    const midiStatus = [...Array(16)].map(x => [...Array(128)].map(y => [[0, 'NONE', 0]])) // 16 Channels, 128 Possible notes
+    const midiData = [ {tick: 0} ];
     for (const note of midiArray) {
       if (!note.c) note.c = 0
       if (!note.v) note.v = 64
       const startTick = note.s * ticksWholeNotes
       const lengthTick = note.l * ticksWholeNotes
 
-      midiStatus[note.c][note.n].push([startTick, '9', note.v])
-      midiStatus[note.c][note.n].push([startTick + lengthTick, '8', note.v])
+      midiData.push({tick: startTick, status: '9', v: note.v, c: note.c, n: note.n})
+      midiData.push({tick: startTick + lengthTick, status: '8', v: note.v, c: note.c, n: note.n})
     }
 
-    for (var i = 0; i < 16; i++) {
-      for (var j = 0; j < 128; j++) {
-        if (midiStatus[i][j].length > 1) {
-          // Sort by the message time
-          midiStatus[i][j].sort(function compare (a, b) {
-            return a[0] - b[0]
-          })
+   
+    midiData.sort(function compare (a, b) {
+      return a.tick - b.tick
+    })
 
-          // Loop through each start/stop command and generate its corresponding midi message.
-          for (var k = 1; k < midiStatus[i][j].length; k++) {
-            const channel = i.toString(16)
-            if (channel.length > 1) throw new Error('midi channel has to be between 0 and 15')
+    // Loop through each start/stop command and generate its corresponding midi message.
+    for (var i = 1; i < midiData.length; i++) {
+      const channel = midiData[i].c.toString(16)
+      if (channel.length > 1) throw new Error('midi channel has to be between 0 and 15')
 
-            let midin = j.toString(16)
-            if (midin.length < 2) midin = '0' + midin
-            if (midin.length > 2) throw new Error('midi note has to be between 0 and 127')
+      let midin = midiData[i].n.toString(16)
+      if (midin.length < 2) midin = '0' + midin
+      if (midin.length > 2) throw new Error('midi note has to be between 0 and 127')
 
-            let midiv = midiStatus[i][j][k][2].toString(16)
-            if (midiv.length < 2) midiv = '0' + midiv
-            if (midiv.length > 2) throw new Error('midi velocity has to be between 0 and 127')
+      let midiv = midiData[i].v.toString(16)
+      if (midiv.length < 2) midiv = '0' + midiv
+      if (midiv.length > 2) throw new Error('midi velocity has to be between 0 and 127')
 
-            let eventId = 'E'
-            const offset = midiStatus[i][j][k][0] - midiStatus[i][j][k - 1][0]
-            if (midiStatus[i][j][k] - midiStatus[i][j][k - 1] > Math.pow(2, 32) - 1) {
-              eventId = 'X'
-            }
-
-            midiMessage.push({ token: eventId, params: note(offset, midiStatus[i][j][k][1] + channel, midin, midiv) })
-          }
-        }
+      let eventId = 'E'
+      const offset = midiData[i].tick - midiData[i-1].tick;
+      if (offset > Math.pow(2, 32) - 1) {
+        eventId = 'X'
       }
+
+      midiMessage.push({ token: eventId, params: note(offset, midiData[i].status + channel, midin, midiv) })
     }
+        
 
     return midiMessage
   }
@@ -281,7 +276,15 @@ class ReaperVst extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    super(obj)
+    if (!obj) {
+      obj = parser.parse(
+`<VST
+>`);
+    }
+    super(obj);
+    while (this.params.length < 8) {
+      this.params.push('');
+    }
     if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes
     else this.externalAttributes = {}
   }
