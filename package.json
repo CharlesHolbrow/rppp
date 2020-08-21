@@ -8,7 +8,7 @@
     "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params pegjs/initial.pegjs",
     "gen-release": "pegjs -o src/parser.js pegjs/initial.pegjs",
     "gen": "npm run gen-debug; npm run gen-release;",
-    "prepublish": "npm test && npm run gen"
+    "prepublish": "npm run gen && npm test"
   },
   "author": "",
   "license": "UNLICENSED",
