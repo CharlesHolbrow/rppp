@@ -403,6 +403,17 @@ class ReaperPanAutomation extends ReaperAutomationTrack {
   }
 }
 
+class ReaperWidthAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<WIDTHENV2
+>`)
+    }
+    super(obj);
+  }
+}
+
 /**
  * Serializes an object and outputs it as an RPP file.
  */
@@ -441,9 +452,10 @@ module.exports = {
   ReaperAudioItem,
   ReaperNotes,
   Tests,
-  ReaperMidiItem,
   ReaperFXChain,
   ReaperPluginAutomation,
-  ReaperVolumeAutomation,
+  ReaperMidiItem,
   ReaperPanAutomation,
+  ReaperVolumeAutomation,
+  ReaperWidthAutomation
 }
