@@ -327,12 +327,32 @@ class ReaperVst extends ReaperBase {
       body += '  '.repeat(indent + 1) + line + '\n'
     }
 
+    const misc = ''
+    for (const o of this.contents) {
+      if (o.contents) {
+        misc += o.dump(indent) + '\n'
+      } else {
+        misc += ReaperBase.dumpStruct(o.token, o.params, indent + 1) + '\n'
+      }
+    }
+
     const vst3 = '  '.repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
     const end = '  '.repeat(indent) + '>'
 
-    const vstBody = start + vst1 + body + vst3 + end + '\n'
+    const vstBody = start + vst1 + body + vst3 + end + '\n';
 
-    return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + WAK).slice(0, -1)
+    return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
+  }
+}
+
+class ReaperPluginAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<PARMENV
+>`)
+    }
+    super(obj);
   }
 }
 
@@ -423,6 +443,7 @@ module.exports = {
   Tests,
   ReaperMidiItem,
   ReaperFXChain,
+  ReaperPluginAutomation,
   ReaperVolumeAutomation,
   ReaperPanAutomation,
 }
