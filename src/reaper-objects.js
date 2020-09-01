@@ -327,7 +327,7 @@ class ReaperVst extends ReaperBase {
       body += '  '.repeat(indent + 1) + line + '\n'
     }
 
-    const misc = ''
+    let misc = ''
     for (const o of this.contents) {
       if (o.contents) {
         misc += o.dump(indent) + '\n'
