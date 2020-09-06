@@ -1,21 +1,41 @@
+const asciiDecoder = new TextDecoder('utf-8')
+const asciiEncoder = new TextEncoder('utf-8')
+
+const fromAscii = str => asciiEncoder.encode(str)
+const toAscii = str => asciiDecoder.decode(str)
+const fromHexString = hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))) // '0000000f' -> [0, 0, 0, 15]
+const toHexString = bytes => bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '')
+
 class Vst2LineOne {
-  constructor (settings = { numIn: 2, numOut: 2, vstIdAscii: 'AAAA' }) {
-    this._vst2IdBuffer = Buffer.from([0, 0, 0, 0])
-    this.numIn = settings.numIn
-    this.numOut = settings.numOut
-    this.vst2IdAscii = settings.vstIdAscii
+  constructor ({ numIn = 2, numOut = 2, vstIdAscii = 'AAAA' } = {}) {
+    // Here's the normal way to represent VST2 IDs as a number: Convert each of
+    // the four characters to a byte. Then interpret the four byte sequence as
+    // a big-endian int. I believe this is an Unsigned bid-endian int, but I am
+    // not %100 sure.
+    this._vst2Id = 0
+    this.numIn = numIn
+    this.numOut = numOut
+    this.vst2IdAscii = vstIdAscii
   }
 
   get vst2IdAscii () {
-    return this._vst2IdBuffer.toString('ascii')
+    const uint8array = new Uint8Array(4)
+    new DataView(uint8array.buffer).setUint32(0, this._vst2Id, false)
+    return toAscii(uint8array)
   }
 
+  /**
+   * @param {string} v
+   */
   set vst2IdAscii (v) {
-    Buffer.from(v, 'ascii').copy(this._vst2IdBuffer)
+    if (v.length !== 4) throw new Error('Invalid vst2IdAscii string')
+    this._vst2Id = new DataView(fromAscii(v).buffer).getUint32(0, false)
   }
 
   get vst2IdHex () {
-    return this._vst2IdBuffer.toString('hex')
+    const uint8array = new Uint8Array(4)
+    new DataView(uint8array.buffer).setUint32(0, this._vst2Id, false)
+    return toHexString(uint8array)
   }
 
   /**
@@ -23,28 +43,26 @@ class Vst2LineOne {
    */
   set vst2IdHex (v) {
     if (v.length !== 8) throw new Error('Invalid vst2IdHex string')
-    Buffer.from(v, 'hex').copy(this._vst2IdBuffer)
+    const uint8array = fromHexString(v)
+    this._vst2Id = new DataView(uint8array.buffer).getUint32(0, false)
   }
 
   get vst2IdNumber () {
-    return this._vst2IdBuffer.readUInt32BE(0)
-  }
-
-  get vst2IdUIntBigEndian () {
-    throw new Error('To get an the id as a number, use vst2IdNumber')
+    return this._vst2Id
   }
 
   /**
-   * @param {number} n the Vst2ID, interpreted as an big-endian uint.
+   * @param {number} n the Vst2ID as a number
    */
-  set vst2IdUIntBigEndian (v) {
-    this._vst2IdBuffer.writeUInt32BE(v, 0)
+  set vst2IdNumber (v) {
+    this._vst2Id = v
   }
 
   toBuffer () {
-    const result = Buffer.alloc(4)
-    result.writeUInt32LE(this.vst2IdNumber)
-    return result
+    // Store vst2 in four bytes as little endian
+    const uint8array = new Uint8Array(4)
+    new DataView(uint8array.buffer).setUint32(0, this._vst2Id, true)
+    return uint8array
   }
 }
 
