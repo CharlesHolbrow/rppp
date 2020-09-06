@@ -1,6 +1,5 @@
 const ReaperBase = require('./reaper-base')
 const rea = require('./reaper-objects')
-const reaperObjects = require('./reaper-objects')
 
 /**
  * @typedef {Object} ReaData

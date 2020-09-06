@@ -153,18 +153,17 @@ NAME "untitled MIDI item"
     }
 
     // Generate a 3D array to store start/stop times for each note on each channel.
-    const midiData = [ {tick: 0} ];
+    const midiData = [{ tick: 0 }]
     for (const note of midiArray) {
       if (!note.c) note.c = 0
       if (!note.v) note.v = 64
       const startTick = note.s * ticksWholeNotes
       const lengthTick = note.l * ticksWholeNotes
 
-      midiData.push({tick: startTick, status: '9', v: note.v, c: note.c, n: note.n})
-      midiData.push({tick: startTick + lengthTick, status: '8', v: note.v, c: note.c, n: note.n})
+      midiData.push({ tick: startTick, status: '9', v: note.v, c: note.c, n: note.n })
+      midiData.push({ tick: startTick + lengthTick, status: '8', v: note.v, c: note.c, n: note.n })
     }
 
-   
     midiData.sort(function compare (a, b) {
       return a.tick - b.tick
     })
