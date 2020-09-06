@@ -47,6 +47,22 @@ describe('Vst2LineOne', function () {
       // l1.toBuffer().length.should.equal()
     })
   })
+
+  describe('fromBuffer', function () {
+    const base64String = 'MnJmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAZgEAAAEAAAAAABAA'
+    let firstLine
+
+    before(function () {
+      const buffer = Buffer.from(base64String, 'base64')
+      const uint8Array = new Uint8Array(buffer)
+      firstLine = Vst2LineOne.fromBuffer(uint8Array)
+    })
+
+    it('should correctly parse the id', function () { firstLine.vst2IdAscii.should.equal('dfr2') })
+    it('should correctly parse the numIn', function () { firstLine.numIn.should.equal(2) })
+    it('should correctly parse the numOut', function () { firstLine.numOut.should.equal(2) })
+    it('should correctly reverse itself', function () { firstLine.nodeToString().should.equal(base64String) })
+  })
 })
 
 describe('vst2', function () {
