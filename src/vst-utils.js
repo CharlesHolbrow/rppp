@@ -42,7 +42,7 @@ class BitMask {
   }
 
   toString () {
-    return new Array(this.length).fill(0).map((_, i) => this.getBit(i) ? '1' : '0').join('')
+    return new Array(this.numBits).fill(0).map((_, i) => this.getBit(i) ? '1' : '0').join('')
   }
 
   get numBytes () { return this.data.length }
@@ -90,6 +90,11 @@ class Vst2LineOne {
   get numIn () { return this.inputMask.numBytes / 8 }
   get numOut () { return this.outputMask.numBytes / 8 }
 
+  // It is helpful to get and set some members in several different formats. For
+  // example, the vst2Id can be expressed as an integer, a ASCII string, or a
+  // hex string. The next group of functions are for getting and setting members
+  // in a variety of different formats
+
   get vst2IdAscii () {
     const uint8array = new Uint8Array(4)
     new DataView(uint8array.buffer).setUint32(0, this._vst2Id, false)
@@ -130,11 +135,25 @@ class Vst2LineOne {
     this._vst2Id = v
   }
 
+  get unknownHex () { return toHexString(this.unknown) }
+  get unknownBitMask () { return new BitMask(this.unknown) }
+  get unknownBitMaskString () { return this.unknownBitMask.toString() }
+  get unknownReport () {
+    return {
+      hex: this.unknownHex,
+      bits: this.unknownBitMaskString,
+      raw: this.unknown
+    }
+  }
+
+  // The next block of functions are for converting to and from the base64
+  // format that is directly used in .RPP chunks.
+
   /**
    * Convert a UInt8Array to a FirstLine instance
    * @param {UInt8Array} data
    */
-  static fromBuffer (data) {
+  static fromUint8Array (data) {
     if (!(data instanceof Uint8Array)) throw new Error('fromBuffer did not get a Uint8Array')
     const view = new DataView(data.buffer)
 
@@ -155,7 +174,7 @@ class Vst2LineOne {
     return firstLine
   }
 
-  toBuffer () {
+  toUint8Array () {
     // Store vst2 in four bytes as little endian
     const length =
       8 + // 4 character vst2 id + 4 character vstMagic
@@ -191,7 +210,7 @@ class Vst2LineOne {
 
   // Get a stringified version of the underlying buffer
   nodeToString () {
-    return Buffer.from(this.toBuffer()).toString('base64')
+    return Buffer.from(this.toUint8Array()).toString('base64')
   }
 }
 

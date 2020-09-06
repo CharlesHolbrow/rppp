@@ -36,26 +36,21 @@ describe('Vst2LineOne', function () {
     l1.vst2IdAscii.should.equal('dfr2')
   })
 
-  describe('toBuffer', function () {
+  describe('toUint8Array', function () {
     it('should contain a little-endian plugin id in the first four bytes', function () {
       const l1 = new Vst2LineOne({ vstIdAscii: 'dfr2' })
-      Array.from(l1.toBuffer().slice(0, 4)).should.deepEqual([0x32, 0x72, 0x66, 0x64])
-    })
-
-    it('should have a length determined by the number of inputs and outputs', function () {
-      const l1 = new Vst2LineOne({ numIn: 2, numOut: 2 })
-      // l1.toBuffer().length.should.equal()
+      Array.from(l1.toUint8Array().slice(0, 4)).should.deepEqual([0x32, 0x72, 0x66, 0x64])
     })
   })
 
-  describe('fromBuffer', function () {
+  describe('fromUint8Array', function () {
     const base64String = 'MnJmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAZgEAAAEAAAAAABAA'
     let firstLine
 
     before(function () {
       const buffer = Buffer.from(base64String, 'base64')
       const uint8Array = new Uint8Array(buffer)
-      firstLine = Vst2LineOne.fromBuffer(uint8Array)
+      firstLine = Vst2LineOne.fromUint8Array(uint8Array)
     })
 
     it('should correctly parse the id', function () { firstLine.vst2IdAscii.should.equal('dfr2') })
