@@ -60,6 +60,10 @@ class BitMask {
 /**
  * Utility class for generating the first line of Reaper VST2 chunk. See:
  * https://forum.cockos.com/showpost.php?p=2325823&postcount=2
+ *
+ * This aims to use Uint8Array instead of Buffer were possible, so that it can
+ * easily be used in the browser as well as in node.js. As of September 2020
+ * the nodeToString method uses Buffer for converting to base64.
  */
 class Vst2LineOne {
   static makeVstMagic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) }
@@ -75,7 +79,7 @@ class Vst2LineOne {
   constructor ({ numIn = 2, numOut = 2, vstIdAscii = 'AAAA' } = {}) {
     // Here's the normal way to represent VST2 IDs as a number: Convert each of
     // the four characters to a byte. Then interpret the four byte sequence as
-    // a big-endian int. I believe this is an Unsigned bid-endian int, but I am
+    // a big-endian int. I believe this is an UNSIGNED big-endian int, but I am
     // not %100 sure.
     this._vst2Id = 0
     this.numIn = numIn
@@ -91,7 +95,7 @@ class Vst2LineOne {
   get numOut () { return this.outputMask.numBytes / 8 }
 
   // It is helpful to get and set some members in several different formats. For
-  // example, the vst2Id can be expressed as an integer, a ASCII string, or a
+  // example, the vst2Id can be expressed as an integer, an ASCII string, or a
   // hex string. The next group of functions are for getting and setting members
   // in a variety of different formats
 
