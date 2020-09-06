@@ -120,8 +120,8 @@ describe('specializer', function() {
                 contents: [
                   {token: 'HASDATA', params: [1, 960, 'QN']},
                   {token: 'E', params: [0, 90, '3c', 60]},
-                  {token: 'E', params: [480, 80, '3c', 00]},
-                  {token: 'E', params: [0, 'b0', '7b', 00]},
+                  {token: 'E', params: [480, 80, '3c', 0]},
+                  {token: 'E', params: [0, 'b0', '7b', 0]},
                 ]
               })
             ]
@@ -142,8 +142,8 @@ describe('specializer', function() {
                     contents: [
                       {token: 'HASDATA', params: [1, 960, 'QN']},
                       {token: 'E', params: [0, 90, '3c', 60]},
-                      {token: 'E', params: [480, 80, '3c', 00]},
-                      {token: 'E', params: [0, 'b0', '7b', 00]},
+                      {token: 'E', params: [480, 80, '3c', 0]},
+                      {token: 'E', params: [0, 'b0', '7b', 0]},
                     ]
                   })
                 ]

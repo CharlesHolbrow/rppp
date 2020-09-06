@@ -15,7 +15,8 @@
   "devDependencies": {
     "mocha": "^8.1.0",
     "pegjs": "^0.10.0",
-    "should": "^13.2.3"
+    "should": "^13.2.3",
+    "standard": "^14.3.4"
   },
   "dependencies": {}
 }
