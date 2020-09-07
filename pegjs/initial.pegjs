@@ -93,3 +93,25 @@ white   = space / "\t"
 start   = white* "<"
 end     = white* ">" white* crlf?
 crlf    = "\n" / "\r\n"
+
+/*
+Note that base64 strings in reaper may wrap to new lines, and have additional
+whitepsace at the beginning of each newline.
+*/
+b64 = fullLines:b64_full_line* lastLine: b64_short_line {
+  return fullLines.join('') + lastLine
+}
+
+b64_short_line = line:b_line & { // every b64 chunk ends with a short line
+  return line.length < 128
+} { return line }
+
+b64_full_line = line:b_line & {
+  return line.length >= 128
+} { return line }
+
+b_line = white* chars:b* e1:'='?  e2:'='?  crlf {
+  return chars.join('') + (e1 || '') + (e2 || '');
+}
+
+b = $[a-zA-Z0-9+\/]

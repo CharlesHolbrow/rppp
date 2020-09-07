@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "npm run gen && mocha ./tests",
-    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params pegjs/initial.pegjs",
+    "test-b64": "npm run gen && mocha ./tests/test-base64",
+    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params,b64 pegjs/initial.pegjs",
     "gen-release": "pegjs -o src/parser.js pegjs/initial.pegjs",
     "gen": "npm run gen-debug; npm run gen-release;",
     "prepublish": "npm run gen && npm test"
