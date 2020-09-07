@@ -1,10 +1,28 @@
 /* eslint-env mocha */
+require('mocha')
+require('should')
 
-const { ReaperVst } = require('../src/reaper-objects')
+const parser = require('../src/parser-debug')
+const specialize = require('../src/specialize')
 const { Vst2LineOne } = require('../src/vst-utils')
+const data = require('./data')
 
-// This is a stub. we want to add helpers that describe the behavior here:
+describe('parse and serialize (with vst2)', function () {
+  it('should parse and specialize a VST2 without error', function () {
+    const struct = parser.parse(data.reaSynDrVst2String)
+    specialize(struct)
+  })
+})
+
+describe.skip('vst2 helpers', function () {
+  it('should have some extra helpers for VST plugins', () => {})
+})
+
+// VST2s encode a bunch of info in their first line (encoded in base64). Most of
+// the spec is described here:
 // https://forum.cockos.com/showthread.php?t=240523
+//
+// Some useful details follow:
 // VST2 Magic value is            `Buffer.from('EE5EEDFE', 'hex')`
 //
 // Here's what Tracktion returns for Zebra2 vst2
@@ -58,31 +76,4 @@ describe('Vst2LineOne', function () {
     it('should correctly parse the numOut', function () { firstLine.numOut.should.equal(2) })
     it('should correctly reverse itself', function () { firstLine.nodeToString().should.equal(base64String) })
   })
-})
-
-describe('vst2', function () {
-  it('should have some extra helpers for VST plugins', () => {
-    const vst = new ReaperVst({
-      token: 'VST',
-      params: [
-        '"VST: DragonflyRoomReverb-vst (Michael Willis)"',
-        'DragonflyRoomReverb-vst.so',
-        0,
-        '',
-        '1684435506<56535464667232647261676F6E666C79>',
-        '',
-        'MnJmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAZgEAAAEAAAAAABAA', // id: 2 in 2 out
-        'cHJlc2V0AE1lZGl1bSBDbGVhciBSb29tAABkcnlfbGV2ZWwAODAuMDAwMDAwAGVhcmx5X2xldmVsADEwLjAwMDAwMABlYXJseV9zZW5kADIwLjAwMDAwMABsYXRlX2xldmVsADIwLjAwMDAwMABzaXplADkuMDAwMDAwAHdpZHRoADEwMC4wMDAwMDAAcHJlZGVsYXkANDkuMDAwMDAwAGRlY2F5ADIuNDAwMDAwAGRpZmZ1c2UANzAuMDAwMDAwAHNwaW4AMC44MDAwMDAAd2FuZGVyADQwLjAwMDAwMABpbl9oaWdoX2N1dAAxNjAwMC4wMDAwMDAAZWFybHlfZGFtcAAxMDAwMC4wMDAwMDAAbGF0ZV9kYW1wADk0MDAuMDAwMDAwAGxvd19ib29zdAA1MC4wMDAwMDAAYm9vc3RfZnJlcQA2MDAuMDAwMDAwAGluX2xvd19jdXQANC4wMDAwMDAAAA==',
-        'AAAQAAAA'
-      ],
-      externalAttributes: {
-        BYPASS: [0, 0, 0],
-        PRESETNAME: ['Factory Presets: Factory Default'],
-        FLOATPOS: [0, 0, 0, 0],
-        FXID: ['{7E06E29C-0388-DD4B-9B13-BB5F766225B7}'],
-        WAK: [0, 0]
-      },
-      contents: []
-    })
-  }) // it should (vst helpers)
 })

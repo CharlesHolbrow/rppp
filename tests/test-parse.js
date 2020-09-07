@@ -1,7 +1,8 @@
 /* eslint-env mocha */
+require('mocha')
+require('should')
 
 const parser = require('../src/parser-debug')
-
 const ReaperBase = require('../src/reaper-base')
 
 describe('parser', function () {

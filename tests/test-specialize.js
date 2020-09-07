@@ -1,4 +1,7 @@
 /* eslint-env mocha */
+require('mocha')
+require('should')
+
 const path = require('path')
 const ReaperBase = require('../src/reaper-base')
 const {

@@ -1,5 +1,6 @@
-const mocha = require('mocha')
-const should = require('should')
+/* eslint-env mocha */
+require('mocha')
+require('should')
 
 const ReaperBase = require('../src/reaper-base')
 const {
@@ -74,7 +75,7 @@ describe('dump', function () {
     })
 
     it('should get the correct object', function () {
-      let testObj = new ReaperBase({
+      const testObj = new ReaperBase({
         token: 'NAME',
         params: ['GUITAR'],
         contents: [
@@ -88,9 +89,9 @@ describe('dump', function () {
           })
         ]
       })
-      
-      testObj.getOrCreateStructByToken('METRONOME', 0).params[0] = 10;
-      
+
+      testObj.getOrCreateStructByToken('METRONOME', 0).params[0] = 10
+
       testObj.should.deepEqual(
         new ReaperBase({
           token: 'NAME',
@@ -127,14 +128,14 @@ describe('dump', function () {
     it('should work for a message with two or more notes', function () {
       dump([
         { n: 5, s: 0, l: 0.25 },
-        { n: 6, s: 0.25, l: 0.25 },
+        { n: 6, s: 0.25, l: 0.25 }
       ]).should.containDeepOrdered(
         [
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
           { token: 'E', params: [960, '80', '05', '00'] },
           { token: 'E', params: [0, '90', '06', '40'] },
-          { token: 'E', params: [960, '80', '06', '00'] },
+          { token: 'E', params: [960, '80', '06', '00'] }
         ]
       )
     })
@@ -193,8 +194,8 @@ describe('dump', function () {
           { token: 'HASDATA', params: [1, 960, 'QN'] },
           { token: 'E', params: [0, '90', '05', '40'] },
           { token: 'E', params: [0, '91', '05', '40'] },
-          { token: 'E', params: [960, '80', '05', '00']},
-          { token: 'E', params: [0, '81', '05', '00'] },
+          { token: 'E', params: [960, '80', '05', '00'] },
+          { token: 'E', params: [0, '81', '05', '00'] }
         ]
       )
     })
