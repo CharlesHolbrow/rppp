@@ -1,5 +1,5 @@
-const mocha = require('mocha')
-const should = require('should')
+/* eslint-env mocha */
+
 const parser = require('../src/parser-debug')
 
 const ReaperBase = require('../src/reaper-base')
@@ -231,7 +231,7 @@ LENGTH 2
     }))
   })
 
-  it('should parse VSTs/Plugins containing Base64', function () {
+  it('should parse VST3 Plugins containing Base64', function () {
     parse(`<VST "VST3: #TStereo Delay (Tracktion)" "#TStereo Delay.vst3" 0 "" 1997878177{5653545344656C237473746572656F20} ""
 oTMVd+9e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAEgUAAAEAAAD//xAA
 AgUAAAEAAABWc3RXAAAACAAAAAEAAAAAQ2NuSwAABOpGQkNoAAAAAlNEZWwAAQAmAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
