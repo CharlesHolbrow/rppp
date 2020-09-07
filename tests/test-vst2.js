@@ -13,7 +13,7 @@ const { Vst2LineOne } = require('../src/vst-utils')
 
 // Here's what Tracktion returns for DragonflyRoomReverb
 // "uidHex": "64667232", // Translates to dfr2
-// "uidInt": 1684435506, // Big Endian Uint
+// "uidInt": 1684435506, // ID uint
 // The end of the first line
 //          '1684435506<56535464667232647261676F6E666C79>',
 // And here's the first line of a DragonflyRoomReverb

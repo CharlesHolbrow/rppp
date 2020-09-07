@@ -142,11 +142,13 @@ class Vst2LineOne {
   get unknownHex () { return toHexString(this.unknown) }
   get unknownBitMask () { return new BitMask(this.unknown) }
   get unknownBitMaskString () { return this.unknownBitMask.toString() }
+  get unknownLittleEndianUint () { return new DataView(this.unknown.buffer, this.unknown.byteOffset).getUint32(0, true) }
   get unknownReport () {
     return {
       hex: this.unknownHex,
       bits: this.unknownBitMaskString,
-      raw: this.unknown
+      raw: this.unknown,
+      uint32: this.unknownLittleEndianUint
     }
   }
 
@@ -215,6 +217,14 @@ class Vst2LineOne {
   // Get a stringified version of the underlying buffer
   nodeToString () {
     return Buffer.from(this.toUint8Array()).toString('base64')
+  }
+
+  /**
+   * @param {string} s base64 string encoding of first line
+   */
+  static nodeFromString (s) {
+    const uint8Array = new Uint8Array(Buffer.from(s, 'base64'))
+    return Vst2LineOne.fromUint8Array(uint8Array)
   }
 }
 
