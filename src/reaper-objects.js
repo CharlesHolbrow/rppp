@@ -182,14 +182,13 @@ NAME "untitled MIDI item"
       if (midiv.length > 2) throw new Error('midi velocity has to be between 0 and 127')
 
       let eventId = 'E'
-      const offset = midiData[i].tick - midiData[i-1].tick;
+      const offset = midiData[i].tick - midiData[i - 1].tick
       if (offset > Math.pow(2, 32) - 1) {
         eventId = 'X'
       }
 
       midiMessage.push({ token: eventId, params: note(offset, midiData[i].status + channel, midin, midiv) })
     }
-        
 
     return midiMessage
   }
@@ -278,11 +277,11 @@ class ReaperVst extends ReaperBase {
     if (!obj) {
       obj = parser.parse(
 `<VST
->`);
+>`)
     }
-    super(obj);
+    super(obj)
     while (this.params.length < 8) {
-      this.params.push('');
+      this.params.push('')
     }
     if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes
     else this.externalAttributes = {}
@@ -338,7 +337,7 @@ class ReaperVst extends ReaperBase {
     const vst3 = '  '.repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
     const end = '  '.repeat(indent) + '>'
 
-    const vstBody = start + vst1 + body + vst3 + end + '\n';
+    const vstBody = start + vst1 + body + vst3 + end + '\n'
 
     return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
   }
@@ -351,7 +350,7 @@ class ReaperPluginAutomation extends ReaperAutomationTrack {
 `<PARMENV
 >`)
     }
-    super(obj);
+    super(obj)
   }
 }
 
@@ -365,7 +364,7 @@ class ReaperNotes extends ReaperBase {
 `<NOTES
 >`)
     }
-    super(obj);
+    super(obj)
   }
 
   dump (indent = 0) {
@@ -387,7 +386,7 @@ class ReaperVolumeAutomation extends ReaperAutomationTrack {
 `<VOLENV2
 >`)
     }
-    super(obj);
+    super(obj)
   }
 }
 
@@ -398,7 +397,7 @@ class ReaperPanAutomation extends ReaperAutomationTrack {
 `<PANENV2
 >`)
     }
-    super(obj);
+    super(obj)
   }
 }
 
@@ -409,7 +408,7 @@ class ReaperWidthAutomation extends ReaperAutomationTrack {
 `<WIDTHENV2
 >`)
     }
-    super(obj);
+    super(obj)
   }
 }
 
