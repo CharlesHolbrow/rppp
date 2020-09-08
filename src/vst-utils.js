@@ -214,13 +214,17 @@ class Vst2LineOne {
     return data
   }
 
-  // Get a stringified version of the underlying buffer
+  /**
+   * Get a stringified version of the underlying buffer
+   * @returns {string}
+   */
   nodeToString () {
     return Buffer.from(this.toUint8Array()).toString('base64')
   }
 
   /**
    * @param {string} s base64 string encoding of first line
+   * @returns  {Vst2LineOne}
    */
   static nodeFromString (s) {
     const uint8Array = new Uint8Array(Buffer.from(s, 'base64'))

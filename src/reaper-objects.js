@@ -3,6 +3,7 @@ const fs = require('fs')
 const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
+const { splitBase64String } = require('./base64')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
@@ -299,17 +300,6 @@ class ReaperVst extends ReaperBase {
     const params = ReaperBase.dumpParams(this.params.slice(0, -3))
     const res = this.token + params
 
-    var lines = []
-    var startIdx = 0
-    const vst2 = this.params.slice(-2)[0]
-    for (var i = 0; i < vst2.length; i++) {
-      if (i % 128 === 0 && i !== 0) {
-        lines.push(vst2.slice(startIdx, i))
-        startIdx = i
-      }
-    }
-    if (vst2.length % 128 !== 0) lines.push(vst2.slice(startIdx, vst2.length))
-
     // These attributes correspond to the VST object, not the FXChain object.
     const BYPASS = this.dumpExternalAttribute('BYPASS', indent)
     const PRESETNAME = this.dumpExternalAttribute('PRESETNAME', indent)
@@ -318,12 +308,9 @@ class ReaperVst extends ReaperBase {
     const WAK = this.dumpExternalAttribute('WAK', indent)
 
     const start = '  '.repeat(indent) + '<' + res + '\n'
-    const vst1 = '  '.repeat(indent + 1) + this.params.slice(-3)[0] + '\n'
-
-    var body = ''
-    for (const line of lines) {
-      body += '  '.repeat(indent + 1) + line + '\n'
-    }
+    const b64Lines = this.params.slice(-3).map(splitBase64String).flat()
+    const indentStr = '  '.repeat(indent + 1)
+    const body = indentStr + b64Lines.join('\n' + indentStr) + '\n'
 
     let misc = ''
     for (const o of this.contents) {
@@ -334,10 +321,9 @@ class ReaperVst extends ReaperBase {
       }
     }
 
-    const vst3 = '  '.repeat(indent + 1) + this.params.slice(-1)[0] + '\n'
     const end = '  '.repeat(indent) + '>'
 
-    const vstBody = start + vst1 + body + vst3 + end + '\n'
+    const vstBody = start + body + end + '\n'
 
     return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
   }
