@@ -155,10 +155,10 @@ describe('parser', function () {
 describe('special object parsing', function () {
   const parse = input => parser.parse(input, { startRule: 'object' })
 
-  it('should parse NOTES objects', function () {
-    parse('<NOTES\n  || Line one with extra pipes |\n  | Second Line\n>').should.deepEqual(new ReaperBase({
+  it('should parse NOTES objects with less than / greater than symbols and pipes', function () {
+    parse('<NOTES\n  || Line one with extra pipes and <> |\n  | Second Line\n>').should.deepEqual(new ReaperBase({
       token: 'NOTES',
-      params: ['| Line one with extra pipes |\n Second Line'],
+      params: ['| Line one with extra pipes and <> |\n Second Line'],
       contents: []
     }))
   })

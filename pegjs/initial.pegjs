@@ -40,7 +40,7 @@ Three example tokens: REAPER_PROJECT RIPPLE GROUPOVERRIDE
 token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 
 multiline_objects = NOTES / VST
-VST = "VST" params: params crlf white* base64data: multiline_string 
+VST = "VST" params: params crlf white* base64data: vst_b64
 { 
   params.push(base64data[0], base64data.slice(1, -1).join(''), base64data.slice(-1)[0])
   return new ReaperBase({ token: "VST", params: params});
@@ -82,7 +82,7 @@ char_nodq       = !'"' c:char { return c }
 char_nobt       = !'`' c:char { return c }
 char_nosq       = !"'" c:char { return c }
 char_nosp       = !' ' c:char { return c }
-char            = [a-z 0-9!.,:@#$%^&*(){}_+/="'|`-]i
+char            = [a-z 0-9!.,:@#$%^&*(){}<>_+/="'|`-]i
 
 /* */
 decimal = txt:$(int "." digit*) { return parseFloat(txt); }
@@ -100,6 +100,10 @@ whitepsace at the beginning of each newline.
 */
 b64 = fullLines:b64_full_line* lastLine: b64_short_line {
   return fullLines.join('') + lastLine
+}
+
+vst_b64 = lines:b_line* {
+  return lines
 }
 
 b64_short_line = line:b_line & { // every b64 chunk ends with a short line
