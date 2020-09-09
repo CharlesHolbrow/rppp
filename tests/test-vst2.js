@@ -2,10 +2,7 @@
 require('mocha')
 require('should')
 
-const parser = require('../src/parser-debug')
-const specialize = require('../src/specialize')
 const { VstB64 } = require('../src/vst-utils')
-const data = require('./data')
 
 describe('test-vst.js', function () {
   describe.skip('vst2 helpers', function () {
