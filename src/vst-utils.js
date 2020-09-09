@@ -66,7 +66,8 @@ class BitMask {
  * the nodeToString method uses Buffer for converting to base64.
  */
 class Vst2LineOne {
-  static makeVst2Magic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) }
+  static makeVst2Magic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) } // same as: [ 238, 94, 237, 254 ]
+  static makeVst3Magic () { return new Uint8Array([0xEF, 0x5E, 0xED, 0xFE]) } // same as: [ 239, 94, 237, 254 ]
   static makeFooter () { return new Uint8Array([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00]) }
   static makeIoBlock (numChannels) {
     const length = 4 + numChannels * 8
