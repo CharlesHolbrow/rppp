@@ -17,20 +17,16 @@ class BitMask {
     }
   }
 
-  setBit (index) {
+  setBit (index, value = true) {
     const bitIndex = index % 8
     const byteIndex = Math.floor(index / 8)
     const byte = this.data[byteIndex]
     const mask = 1 << bitIndex
-    this.data[byteIndex] = mask | byte
+    this.data[byteIndex] = (value ? mask : ~mask) | byte
   }
 
   clearBit (index) {
-    const bitIndex = index % 8
-    const byteIndex = Math.floor(index / 8)
-    const byte = this.data[byteIndex]
-    const mask = 1 << bitIndex
-    this.data[byteIndex] = ~mask & byte
+    this.setBit(index, false)
   }
 
   getBit (index) {
@@ -39,6 +35,10 @@ class BitMask {
     const byte = this.data[byteIndex]
     const mask = 1 << bitIndex
     return mask & byte
+  }
+
+  clear () {
+    this.data.fill(0)
   }
 
   toString () {
@@ -58,14 +58,14 @@ class BitMask {
 }
 
 /**
- * Utility class for generating the first line of Reaper VST2 chunk. See:
+ * Utility class for generating the first line of Reaper VST chunk. See:
  * https://forum.cockos.com/showpost.php?p=2325823&postcount=2
  *
  * This aims to use Uint8Array instead of Buffer were possible, so that it can
  * easily be used in the browser as well as in node.js. As of September 2020
  * the nodeToString method uses Buffer for converting to base64.
  */
-class Vst2LineOne {
+class VstB64 {
   static makeVst2Magic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) } // same as: [ 238, 94, 237, 254 ]
   static makeVst3Magic () { return new Uint8Array([0xEF, 0x5E, 0xED, 0xFE]) } // same as: [ 239, 94, 237, 254 ]
   static makeFooter () { return new Uint8Array([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00]) }
@@ -85,15 +85,18 @@ class Vst2LineOne {
     this.numIn = numIn
     this.numOut = numOut
     this.vst2IdAscii = vstIdAscii
-    this.magic = Vst2LineOne.makeVst2Magic()
+    this.magic = VstB64.makeVst2Magic()
     this.stateSize = 0
-    this.footer = Vst2LineOne.makeFooter()
+    this.footer = VstB64.makeFooter()
   }
 
-  set numIn (numIn) { this.inputMask = new BitMask(numIn) }
-  set numOut (numOut) { this.outputMask = new BitMask(numOut) }
+  set numIn (numIn) { this.inputMask = new BitMask(numIn); this.initializeInputMask() }
+  set numOut (numOut) { this.outputMask = new BitMask(numOut); this.initializeOutputMask() }
   get numIn () { return this.inputMask.numBytes / 8 }
   get numOut () { return this.outputMask.numBytes / 8 }
+
+  initializeInputMask () { this.inputMask.clear(); for (let i = 0; i < this.numIn; i++) this.inputMask.setBit(i * 8 + 1) }
+  initializeOutputMask () { this.outputMask.clear(); for (let i = 0; i < this.numIn; i++) this.outputMask.setBit(i * 8 + 1) }
 
   // It is helpful to get and set some members in several different formats. For
   // example, the vst2Id can be expressed as an integer, an ASCII string, or a
@@ -156,7 +159,7 @@ class Vst2LineOne {
     const numIn = view.getUint32(8, true)
     const numOut = view.getUint32(8 + 4 + numIn * 8, true)
 
-    const firstLine = new Vst2LineOne()
+    const firstLine = new VstB64()
     firstLine.vst2IdNumber = idNumber
     firstLine.magic = magic
 
@@ -217,15 +220,15 @@ class Vst2LineOne {
   /**
    * CAUTION: fromString depends on Buffer, and will not work in the browser
    * @param {string} s base64 string encoding of first line
-   * @returns  {Vst2LineOne}
+   * @returns  {VstB64}
    */
   static fromString (s) {
     const uint8Array = new Uint8Array(Buffer.from(s, 'base64'))
-    return Vst2LineOne.fromUint8Array(uint8Array)
+    return VstB64.fromUint8Array(uint8Array)
   }
 }
 
 module.exports = {
-  Vst2LineOne,
+  VstB64,
   BitMask
 }

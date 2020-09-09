@@ -3,7 +3,7 @@ const fs = require('fs')
 const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
-const { Vst2LineOne } = require('./vst-utils')
+const { VstB64 } = require('./vst-utils')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
@@ -283,7 +283,7 @@ class ReaperVst extends ReaperBase {
 
     if (typeof this.b64Chunks[0] === 'string') {
       // .b64Chunks can contain objects that have a .toString() method
-      this.b64Chunks[0] = Vst2LineOne.fromString(this.b64Chunks[0])
+      this.b64Chunks[0] = VstB64.fromString(this.b64Chunks[0])
     }
   }
 

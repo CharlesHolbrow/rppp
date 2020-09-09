@@ -20,7 +20,7 @@ const wrapExample =
   A
 `
 
-describe('base64', function () {
+describe('test-parser-base64.js', function () {
   describe('base64 parser', function () {
     it('should handle simple no-wrap lines', function () {
       for (const [input, result] of noWrapExamples) {
