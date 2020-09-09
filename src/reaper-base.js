@@ -1,27 +1,39 @@
 /**
  * @typedef {Object} ReaData
  * @property {string} token Reaper token such as VST, TRACK, or NAME
- * @property {string[]} params ex. ["hi", 5000]]
- * @property {ReaData[]} [contents] optional contents
+ * @property {any[]} params ex. ["hi", 5000]]
+ * @param {any[]} contents
+ * @param {any[]} b64Chunks
  */
+
+const { splitBase64String } = require('./base64')
 
 // Base class for parsing objects that are not special.
 class ReaperBase {
   /**
-     * @param {ReaData} obj
+   * @param {ReaData} obj
+   */
+  constructor ({ token, params = [], contents = [], b64Chunks = [] } = {}) {
+    if (!token) throw new TypeError('ReaperBase needs a .token string')
+    if (typeof token !== 'string') throw new TypeError('ReaperBase .token must be a string')
+    if (!Array.isArray(params)) throw new TypeError('ReaperBase .params must be an Array')
+    if (!Array.isArray(contents)) throw new TypeError('ReaperBase .contents must be a Array')
+    if (!Array.isArray(b64Chunks)) throw new TypeError('ReaperBase .b64Chunks must be a Array')
+
+    this.token = token
+    this.params = params
+    this.contents = contents
+
+    /**
+     * @member {string|object} b64Chunks[] Each item in the array will represent
+     * a b64 chunk. When an object has multiple chunks (VSTs have 3), each chunk
+     * will be stored as a single string even if it's textual representation
+     * spans multiple lines. The dump method is responsible for splitting up
+     * long b64 strings.
+     *
+     * IMPORTANT: Any objects in .b64Chunks MUST have a .toString() method.
      */
-  constructor (obj) {
-    if (!obj.token) throw new TypeError('Objects need to have a token key')
-    if (typeof obj.token !== 'string') throw new TypeError('obj.token has to have type string')
-    if (!obj.params) obj.params = []
-
-    if (!Array.isArray(obj.params)) throw new TypeError('obj.params has to have type Array')
-    if (!obj.contents) obj.contents = []
-    if (!Array.isArray(obj.contents)) throw new TypeError('obj.contents has to have type Array')
-
-    this.token = obj.token
-    this.params = obj.params
-    this.contents = obj.contents
+    this.b64Chunks = b64Chunks
   }
 
   /**
@@ -66,8 +78,9 @@ class ReaperBase {
   }
 
   dump (indent = 0) {
-    var start = '  '.repeat(indent) + '<' + ReaperBase.dumpStruct(this.token, this.params) + '\n'
-    var body = ''
+    const start = '  '.repeat(indent) + '<' + ReaperBase.dumpStruct(this.token, this.params) + '\n'
+    let body = ''
+    // Output Sub Objects
     for (const o of this.contents) {
       if (o.contents) {
         body += o.dump(indent + 1) + '\n'
@@ -75,8 +88,27 @@ class ReaperBase {
         body += ReaperBase.dumpStruct(o.token, o.params, indent + 1) + '\n'
       }
     }
+
+    body += this.dumpB64Chunks(indent + 1)
+
     var end = '  '.repeat(indent) + '>'
     return start + body + end
+  }
+
+  dumpB64Chunks (indent = 0) {
+    let body = ''
+
+    // Output base64 chunks, splitting long lines if needed
+    if (this.b64Chunks.length) {
+      const indentStr = '  '.repeat(indent)
+      const b64Lines = this.b64Chunks
+        .map(b64 => splitBase64String(typeof b64 === 'string' ? b64 : b64.toString()))
+        .flat()
+
+      body += indentStr + b64Lines.join('\n' + indentStr) + '\n'
+    }
+
+    return body
   }
 
   static dumpNum (i) {

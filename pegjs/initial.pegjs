@@ -42,8 +42,8 @@ token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 multiline_objects = NOTES / VST
 VST = "VST" params: params crlf vstA:b64 vstB:b64 vstC:b64
 { 
-  params.push(vstA, vstB, vstC);
-  return new ReaperBase({ token: "VST", params: params});
+  const b64Chunks = [vstA, vstB, vstC]
+  return new ReaperBase({ token: "VST", params, b64Chunks });
 }
 NOTES = "NOTES" crlf note: pi_string { 
   return new ReaperBase({ token: "NOTES", params: [ note ]}); 

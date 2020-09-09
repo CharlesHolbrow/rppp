@@ -3,7 +3,6 @@ const fs = require('fs')
 const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
-const { splitBase64String } = require('./base64')
 const { Vst2LineOne } = require('./vst-utils')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
@@ -278,17 +277,13 @@ class ReaperVst extends ReaperBase {
   constructor (obj) {
     if (!obj) obj = parser.parse('<VST\n>')
     super(obj)
-    while (this.params.length < 8) this.params.push('')
+    while (this.params.length < 5) this.params.push('')
     if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes
     else this.externalAttributes = {}
 
-    // At this point, we know that we have at least 8 params
-    const firstLineString = this.params.slice(-3)[0]
-    if (firstLineString.length) {
-      this.firstLine = Vst2LineOne.fromString(firstLineString)
-    } else {
-      this.firstLine = new Vst2LineOne()
-      this.params.slice(-3)[0] = this.firstLine.toString()
+    if (typeof this.b64Chunks[0] === 'string') {
+      // .b64Chunks can contain objects that have a .toString() method
+      this.b64Chunks[0] = Vst2LineOne.fromString(this.b64Chunks[0])
     }
   }
 
@@ -301,26 +296,12 @@ class ReaperVst extends ReaperBase {
   }
 
   dump (indent = 0) {
-    const params = ReaperBase.dumpParams(this.params.slice(0, -3))
-    const res = this.token + params
-
     // These attributes correspond to the VST object, not the FXChain object.
     const BYPASS = this.dumpExternalAttribute('BYPASS', indent)
     const PRESETNAME = this.dumpExternalAttribute('PRESETNAME', indent)
     const FLOATPOS = this.dumpExternalAttribute('FLOATPOS', indent)
     const FXID = this.dumpExternalAttribute('FXID', indent)
     const WAK = this.dumpExternalAttribute('WAK', indent)
-
-    // The first of the three base64 strings gets special treatment
-    const [stateB64, presetB64] = this.params.slice(-2)
-    const b64Lines = [
-      this.firstLine.toString(),
-      stateB64,
-      presetB64
-    ].map(splitBase64String).flat()
-
-    const indentStr = '  '.repeat(indent + 1)
-    const body = indentStr + b64Lines.join('\n' + indentStr) + '\n'
 
     let misc = ''
     for (const o of this.contents) {
@@ -331,8 +312,10 @@ class ReaperVst extends ReaperBase {
       }
     }
 
-    const start = '  '.repeat(indent) + '<' + res + '\n'
-    const end = '  '.repeat(indent) + '>'
+    const indentStr = '  '.repeat(indent)
+    const start = indentStr + '<' + this.token + ReaperBase.dumpParams(this.params) + '\n'
+    const body = this.dumpB64Chunks(indent + 1)
+    const end = indentStr + '>'
     const vstBody = start + body + end + '\n'
 
     return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
