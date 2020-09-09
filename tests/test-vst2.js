@@ -8,13 +8,6 @@ const { VstB64 } = require('../src/vst-utils')
 const data = require('./data')
 
 describe('test-vst.js', function () {
-  describe('parse and serialize (with vst2)', function () {
-    it('should parse and specialize a VST2 without error', function () {
-      const struct = parser.parse(data.reaSynDrVst2String)
-      specialize(struct)
-    })
-  })
-
   describe.skip('vst2 helpers', function () {
     it('should have some extra helpers for VST plugins', () => {})
   })
