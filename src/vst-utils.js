@@ -66,9 +66,8 @@ class BitMask {
  * the nodeToString method uses Buffer for converting to base64.
  */
 class Vst2LineOne {
-  static makeVstMagic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) }
+  static makeVst2Magic () { return new Uint8Array([0xEE, 0x5E, 0xED, 0xFE]) }
   static makeFooter () { return new Uint8Array([0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00]) }
-  static makeUnknown () { return new Uint8Array([0x00, 0x00, 0x00, 0x00]) }
   static makeIoBlock (numChannels) {
     const length = 4 + numChannels * 8
     const data = new Uint8Array(length)
@@ -85,7 +84,8 @@ class Vst2LineOne {
     this.numIn = numIn
     this.numOut = numOut
     this.vst2IdAscii = vstIdAscii
-    this.unknown = Vst2LineOne.makeUnknown()
+    this.magic = Vst2LineOne.makeVst2Magic()
+    this.stateSize = 0
     this.footer = Vst2LineOne.makeFooter()
   }
 
@@ -139,19 +139,6 @@ class Vst2LineOne {
     this._vst2Id = v
   }
 
-  get unknownHex () { return toHexString(this.unknown) }
-  get unknownBitMask () { return new BitMask(this.unknown) }
-  get unknownBitMaskString () { return this.unknownBitMask.toString() }
-  get unknownLittleEndianUint () { return new DataView(this.unknown.buffer, this.unknown.byteOffset).getUint32(0, true) }
-  get unknownReport () {
-    return {
-      hex: this.unknownHex,
-      bits: this.unknownBitMaskString,
-      raw: this.unknown,
-      uint32: this.unknownLittleEndianUint
-    }
-  }
-
   // The next block of functions are for converting to and from the base64
   // format that is directly used in .RPP chunks.
 
@@ -161,20 +148,23 @@ class Vst2LineOne {
    */
   static fromUint8Array (data) {
     if (!(data instanceof Uint8Array)) throw new Error('fromBuffer did not get a Uint8Array')
-    const view = new DataView(data.buffer)
+    const view = new DataView(data.buffer, data.byteOffset)
 
     const idNumber = view.getUint32(0, true)
+    const magic = data.subarray(4, 8)
     const numIn = view.getUint32(8, true)
     const numOut = view.getUint32(8 + 4 + numIn * 8, true)
 
     const firstLine = new Vst2LineOne()
     firstLine.vst2IdNumber = idNumber
+    firstLine.magic = magic
 
-    let i = 8 + 4
+    let i = 8 + 4 // skip id, magic, numIn
     firstLine.inputMask = new BitMask(data.subarray(i, i += 8 * numIn))
-    i += 4
+    i += 4 // skip numOut
     firstLine.outputMask = new BitMask(data.subarray(i, i += 8 * numOut))
-    firstLine.unknown = data.subarray(i, i += 4)
+    firstLine.stateSize = view.getUint32(i, true)
+    i += 4 // skip stateSize
     firstLine.footer = data.subarray(i, i += 8)
 
     return firstLine
@@ -188,13 +178,13 @@ class Vst2LineOne {
       this.numIn * 8 + // input channel bit mask
       4 + // 4 bytes for the number of outputs
       this.numOut * 8 + // output channel bit mask
-      4 + // something unknown
+      4 + // stateSize
       8 // 01 00 00 00 00 00 10 00
 
     const data = new Uint8Array(length)
     const view = new DataView(data.buffer)
     view.setUint32(0, this.vst2IdNumber, true) // little-endian vstID
-    data.set(Vst2LineOne.makeVstMagic(), 4) // vst magic
+    data.set(this.magic, 4) // vst magic
 
     // Input and Output channel count + bit mask
     let i = 8
@@ -205,9 +195,9 @@ class Vst2LineOne {
     data.set(outBlock, i)
     i += outBlock.length
 
-    // Unknown section + footer
-    data.set(this.unknown, i)
-    i += this.unknown.length // should always be 4
+    // State size + footer
+    view.setUint32(i, this.stateSize, true)
+    i += 4
     data.set(this.footer, i)
     i += this.footer.length // should always be 8
 
@@ -215,18 +205,20 @@ class Vst2LineOne {
   }
 
   /**
+   * CAUTION: toString depends on Buffer, and will not work in the browser
    * Get a stringified version of the underlying buffer
    * @returns {string}
    */
-  nodeToString () {
+  toString () {
     return Buffer.from(this.toUint8Array()).toString('base64')
   }
 
   /**
+   * CAUTION: fromString depends on Buffer, and will not work in the browser
    * @param {string} s base64 string encoding of first line
    * @returns  {Vst2LineOne}
    */
-  static nodeFromString (s) {
+  static fromString (s) {
     const uint8Array = new Uint8Array(Buffer.from(s, 'base64'))
     return Vst2LineOne.fromUint8Array(uint8Array)
   }

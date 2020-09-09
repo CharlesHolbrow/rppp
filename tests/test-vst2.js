@@ -62,18 +62,25 @@ describe('Vst2LineOne', function () {
   })
 
   describe('fromUint8Array', function () {
-    const base64String = 'MnJmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAZgEAAAEAAAAAABAA'
-    let firstLine
+    const vst2Base64String = 'MnJmZO5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAAZgEAAAEAAAAAABAA'
+    const vst3Base64String = 'TNxYYu5e7f4CAAAAAQAAAAAAAAACAAAAAAAAAAIAAAABAAAAAAAAAAIAAAAAAAAA/AgAAAEAAAD//xAA'
+    let vst2FirstLine
+    let vst3FirstLine
 
     before(function () {
-      const buffer = Buffer.from(base64String, 'base64')
-      const uint8Array = new Uint8Array(buffer)
-      firstLine = Vst2LineOne.fromUint8Array(uint8Array)
+      let buffer = Buffer.from(vst2Base64String, 'base64')
+      let uint8Array = new Uint8Array(buffer)
+      vst2FirstLine = Vst2LineOne.fromUint8Array(uint8Array)
+
+      buffer = Buffer.from(vst3Base64String, 'base64')
+      uint8Array = new Uint8Array(buffer)
+      vst3FirstLine = Vst2LineOne.fromUint8Array(uint8Array)
     })
 
-    it('should correctly parse the id', function () { firstLine.vst2IdAscii.should.equal('dfr2') })
-    it('should correctly parse the numIn', function () { firstLine.numIn.should.equal(2) })
-    it('should correctly parse the numOut', function () { firstLine.numOut.should.equal(2) })
-    it('should correctly reverse itself', function () { firstLine.nodeToString().should.equal(base64String) })
+    it('should correctly parse the id', function () { vst2FirstLine.vst2IdAscii.should.equal('dfr2') })
+    it('should correctly parse the numIn', function () { vst2FirstLine.numIn.should.equal(2) })
+    it('should correctly parse the numOut', function () { vst2FirstLine.numOut.should.equal(2) })
+    it('should correctly reverse itself (VST2)', function () { vst2FirstLine.toString().should.equal(vst2Base64String) })
+    it('should correctly reverse itself (VST3)', function () { vst3FirstLine.toString().should.equal(vst3Base64String) })
   })
 })

@@ -4,6 +4,7 @@ const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
 const { splitBase64String } = require('./base64')
+const { Vst2LineOne } = require('./vst-utils')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
@@ -275,17 +276,20 @@ class ReaperVst extends ReaperBase {
    * @param {ReaData} obj
    */
   constructor (obj) {
-    if (!obj) {
-      obj = parser.parse(
-`<VST
->`)
-    }
+    if (!obj) obj = parser.parse('<VST\n>')
     super(obj)
-    while (this.params.length < 8) {
-      this.params.push('')
-    }
+    while (this.params.length < 8) this.params.push('')
     if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes
     else this.externalAttributes = {}
+
+    // At this point, we know that we have at least 8 params
+    const firstLineString = this.params.slice(-3)[0]
+    if (firstLineString.length) {
+      this.firstLine = Vst2LineOne.fromString(firstLineString)
+    } else {
+      this.firstLine = new Vst2LineOne()
+      this.params.slice(-3)[0] = this.firstLine.toString()
+    }
   }
 
   dumpExternalAttribute (attr, indent) {
@@ -307,8 +311,14 @@ class ReaperVst extends ReaperBase {
     const FXID = this.dumpExternalAttribute('FXID', indent)
     const WAK = this.dumpExternalAttribute('WAK', indent)
 
-    const start = '  '.repeat(indent) + '<' + res + '\n'
-    const b64Lines = this.params.slice(-3).map(splitBase64String).flat()
+    // The first of the three base64 strings gets special treatment
+    const [stateB64, presetB64] = this.params.slice(-2)
+    const b64Lines = [
+      this.firstLine.toString(),
+      stateB64,
+      presetB64
+    ].map(splitBase64String).flat()
+
     const indentStr = '  '.repeat(indent + 1)
     const body = indentStr + b64Lines.join('\n' + indentStr) + '\n'
 
@@ -321,8 +331,8 @@ class ReaperVst extends ReaperBase {
       }
     }
 
+    const start = '  '.repeat(indent) + '<' + res + '\n'
     const end = '  '.repeat(indent) + '>'
-
     const vstBody = start + body + end + '\n'
 
     return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
