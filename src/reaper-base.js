@@ -26,22 +26,22 @@ class ReaperBase {
 
   /**
    * Gets the `index`'th struct with token `token` and returns the object.
-   * If the `index`'th struct was not found, then create a token and push 
+   * If the `index`'th struct was not found, then create a token and push
    * it to the end of the contents array.
    * @param {string} token
    * @param {number} index
    */
   getOrCreateStructByToken (token, index = 0) {
-    let found = 0;
-    for (let obj of this.contents){
-      if (obj.token === token){
+    let found = 0
+    for (const obj of this.contents) {
+      if (obj.token === token) {
         if (found === index) {
-          return obj;
+          return obj
         }
-        found += 1;
+        found += 1
       }
     }
-    return this.createStruct(token, this.contents.length);
+    return this.createStruct(token, this.contents.length)
   }
 
   /**
@@ -49,10 +49,10 @@ class ReaperBase {
    * @param {string} token
    * @param {number} index
    */
-  createStruct(token, index = 0){
-    var obj = {'token': token, params: []};    
-    this.contents.splice(index, 0, obj);
-    return this.contents[index];
+  createStruct (token, index = 0) {
+    var obj = { token: token, params: [] }
+    this.contents.splice(index, 0, obj)
+    return this.contents[index]
   }
 
   /**
