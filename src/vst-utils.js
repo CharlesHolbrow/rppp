@@ -90,13 +90,13 @@ class VstB64 {
     this.footer = VstB64.makeFooter()
   }
 
-  set numIn (numIn) { this.inputMask = new BitMask(numIn); this.initializeInputMask() }
-  set numOut (numOut) { this.outputMask = new BitMask(numOut); this.initializeOutputMask() }
+  set numIn (numIn) { this.inputMask = new BitMask(numIn * 8); this.initializeInputMask() }
+  set numOut (numOut) { this.outputMask = new BitMask(numOut * 8); this.initializeOutputMask() }
   get numIn () { return this.inputMask.numBytes / 8 }
   get numOut () { return this.outputMask.numBytes / 8 }
 
-  initializeInputMask () { this.inputMask.clear(); for (let i = 0; i < this.numIn; i++) this.inputMask.setBit(i * 8 + 1) }
-  initializeOutputMask () { this.outputMask.clear(); for (let i = 0; i < this.numIn; i++) this.outputMask.setBit(i * 8 + 1) }
+  initializeInputMask () { this.inputMask.clear(); for (let i = 0; i < this.numIn; i++) this.inputMask.setBit(i * 64 + i) }
+  initializeOutputMask () { this.outputMask.clear(); for (let i = 0; i < this.numIn; i++) this.outputMask.setBit(i * 64 + i) }
 
   // It is helpful to get and set some members in several different formats. For
   // example, the vst2Id can be expressed as an integer, an ASCII string, or a

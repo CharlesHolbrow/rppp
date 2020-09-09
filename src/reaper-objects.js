@@ -4,6 +4,7 @@ const ReaperBase = require('./reaper-base')
 const ReaperAutomationTrack = require('./reaper-automation-track')
 const path = require('path')
 const { VstB64 } = require('./vst-utils')
+const { base64StringByteLength } = require('./base64')
 
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
@@ -278,8 +279,11 @@ class ReaperVst extends ReaperBase {
     if (!obj) obj = parser.parse('<VST\n>')
     super(obj)
     while (this.params.length < 5) this.params.push('')
-    if (obj.externalAttributes) this.externalAttributes = obj.externalAttributes
-    else this.externalAttributes = {}
+    this.externalAttributes = obj.externalAttributes || {}
+
+    if (!this.b64Chunks[0]) this.b64Chunks[0] = new VstB64()
+    if (!this.b64Chunks[1]) this.b64Chunks[1] = ''
+    if (!this.b64Chunks[2]) this.b64Chunks[2] = 'AAAQAAAA' // 'No Preset'
 
     if (typeof this.b64Chunks[0] === 'string') {
       // .b64Chunks can contain objects that have a .toString() method
@@ -319,6 +323,22 @@ class ReaperVst extends ReaperBase {
     const vstBody = start + body + end + '\n'
 
     return (BYPASS + vstBody + PRESETNAME + FLOATPOS + FXID + misc + WAK).slice(0, -1)
+  }
+
+  /**
+   * @param {string} b64String the plugin's state in base64 format
+   */
+  setVst2State (b64String) {
+    if (typeof b64String !== 'string') {
+      throw new Error('ReaperVst.setVst2State did not receive a string')
+    }
+    this.b64Chunks[0].stateSize = base64StringByteLength(b64String)
+    this.b64Chunks[1] = b64String
+  }
+
+  initializeRouting (numIn = 2, numOut = 2) {
+    this.b64Chunks[0].numIn = numIn
+    this.b64Chunks[0].numOut = numOut
   }
 }
 
