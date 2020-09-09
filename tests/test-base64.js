@@ -33,19 +33,19 @@ describe('base64', function () {
     })
   })
 
-  describe.skip('base64 objects', function () {
+  describe('base64 objects', function () {
     it('should handle known objects with base64 arguments', function () {
       parser.parse('<RECORD_CFG\n  ZXZhdxgAAA==\n>').should.deepEqual(new ReaperBase({
         token: 'RECORD_CFG',
-        params: ['ZXZhdxgAAA==']
+        b64Chunks: ['ZXZhdxgAAA==']
       }))
     })
 
     it('should handle known objects with base64 arguments and line wraps', function () {
-      const str = '<RECORD_CFG\n  776t3g3wrd6bJAA+0tNVPQAAAAB8ppE8cbkLPAAAAAAAAIA/PBIXPAAAAAAAAAAAvTeGNQAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n  AHN0b2NrIC0gc3RlYWR5IHJvY2sga2ljawAAAAAA\n>'
+      const str = '<RECORD_CFG\n  776t3g3wrd6bJAA+0tNVPQAAAAB8ppE8cbkLPAAAAAAAAIA/PBIXPAAAAAAAAAAAvTeGNQAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHN0b2NrIC0gc3Rl\n  YWR5IHJvY2sga2ljawAAAAAA\n>'
       parser.parse(str).should.deepEqual(new ReaperBase({
         token: 'RECORD_CFG',
-        params: ['776t3g3wrd6bJAA+0tNVPQAAAAB8ppE8cbkLPAAAAAAAAIA/PBIXPAAAAAAAAAAAvTeGNQAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHN0b2NrIC0gc3RlYWR5IHJvY2sga2ljawAAAAAA']
+        b64Chunks: ['776t3g3wrd6bJAA+0tNVPQAAAAB8ppE8cbkLPAAAAAAAAIA/PBIXPAAAAAAAAAAAvTeGNQAAgD8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHN0b2NrIC0gc3RlYWR5IHJvY2sga2ljawAAAAAA']
       }))
     })
   })

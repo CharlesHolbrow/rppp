@@ -22,4 +22,4 @@ const zebra2 = rppZebra2
 
 console.log('"rppEmpty"  loaded:', rppEmpty.token, rppEmpty.params)
 console.log('"rppZebra2" loaded:', rppZebra2.token, rppZebra2.params)
-console.log('"zebra2"     found:', zebra2.params.slice(0, 7).concat([zebra2.params[7].slice(0, 10) + '...', zebra2.params[8]]))
+console.log('"zebra2"     found:', Object.keys(zebra2))

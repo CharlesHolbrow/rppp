@@ -39,7 +39,7 @@ Three example tokens: REAPER_PROJECT RIPPLE GROUPOVERRIDE
 */
 token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 
-multiline_objects = NOTES / VST
+multiline_objects = NOTES / VST / CFG
 VST = "VST" params: params crlf vstA:b64 vstB:b64 vstC:b64
 { 
   const b64Chunks = [vstA, vstB, vstC]
@@ -48,6 +48,11 @@ VST = "VST" params: params crlf vstA:b64 vstB:b64 vstC:b64
 NOTES = "NOTES" crlf note: pi_string { 
   return new ReaperBase({ token: "NOTES", params: [ note ]}); 
 }
+CFG = token:cfg_token params:params crlf b64Chunks:b64* {
+  return new ReaperBase({ token, params, b64Chunks })
+}
+// Add CFG object that contain base64 content to `cfg`:
+cfg_token = "RECORD_CFG" / "APPLYFX_CFG" / "RENDER_CFG"
 
 /*
 Parameters are everything after the token.
