@@ -1,13 +1,14 @@
 function splitBase64String (b64) {
+  const numSubStrings = Math.max(1, Math.ceil(b64.length / 128))
+  let start = 0
+  let end = 128
   const lines = []
-  let startIdx = 0
-  for (var i = 0; i < b64.length; i++) {
-    if (i % 128 === 0 && i !== 0) {
-      lines.push(b64.slice(startIdx, i))
-      startIdx = i
-    }
+  for (let i = 0; i < numSubStrings; i++) {
+    end = Math.min(end, b64.length)
+    lines.push(b64.slice(start, end))
+    start += 128
+    end += 128
   }
-  if (b64.length % 128 !== 0) lines.push(b64.slice(startIdx, b64.length))
   return lines
 }
 

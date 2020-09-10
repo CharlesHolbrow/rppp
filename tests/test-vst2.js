@@ -3,10 +3,18 @@ require('mocha')
 require('should')
 
 const { VstB64 } = require('../src/vst-utils')
+const { ReaperVst } = require('../src/reaper-objects')
 
 describe('test-vst.js', function () {
-  describe.skip('vst2 helpers', function () {
-    it('should have some extra helpers for VST plugins', () => {})
+  describe('vst2 helpers', function () {
+    describe('newly created ReaperVst objects', () => {
+      let vst
+      before(function () { vst = new ReaperVst() })
+
+      it('should have three b64Chunks', function () {
+        vst.b64Chunks.length.should.equal(3)
+      })
+    })
   })
 
   // VST2s encode a bunch of info in their first line (encoded in base64). Most of
