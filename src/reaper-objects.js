@@ -340,6 +340,10 @@ class ReaperVst extends ReaperBase {
     this.b64Chunks[0].numIn = numIn
     this.b64Chunks[0].numOut = numOut
   }
+
+  setVst2IdNumber (idNumber) {
+    this.b64Chunks[0].vst2IdNumber = idNumber
+  }
 }
 
 class ReaperPluginAutomation extends ReaperAutomationTrack {
