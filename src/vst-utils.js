@@ -96,7 +96,7 @@ class VstB64 {
   get numOut () { return this.outputMask.numBytes / 8 }
 
   initializeInputMask () { this.inputMask.clear(); for (let i = 0; i < this.numIn; i++) this.inputMask.setBit(i * 64 + i) }
-  initializeOutputMask () { this.outputMask.clear(); for (let i = 0; i < this.numIn; i++) this.outputMask.setBit(i * 64 + i) }
+  initializeOutputMask () { this.outputMask.clear(); for (let i = 0; i < this.numOut; i++) this.outputMask.setBit(i * 64 + i) }
 
   // It is helpful to get and set some members in several different formats. For
   // example, the vst2Id can be expressed as an integer, an ASCII string, or a
