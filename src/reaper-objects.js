@@ -49,63 +49,51 @@ class ReaperTrack extends ReaperBase {
   }
 
   /**
-   * @param {ReaperMidiItem} obj
+   * @param {ReaperItem} obj
    */
-  addMidiItem (midiObj) {
-    if (!(midiObj instanceof ReaperMidiItem)) throw new TypeError('midiObj has to be of type ReaperMidiItem')
-    return this.add(midiObj)
-  }
-
-  /**
-   * @param {ReaperAudioItem} obj
-   */
-  addAudioItem (audioObj) {
-    if (!(audioObj instanceof ReaperAudioItem)) throw new TypeError('audioObj has to be of type ReaperAudioItem')
-    return this.add(audioObj)
+  addItem (obj) {
+    if (!(obj instanceof ReaperItem)) throw new TypeError('obj has to be of type ReaperItem')
+    return this.add(obj)
   }
 }
 
-class ReaperAudioItem extends ReaperBase {
-  /**
-   * @param {ReaData} obj
-   */
+class ReaperItem extends ReaperBase {
   constructor (obj) {
     if (!obj) {
       obj = parser.parse(
 `<ITEM
-POSITION 0
-LENGTH 2
-NAME "untitled WAVE item"
-  <SOURCE WAVE
-  >
 >`)
     }
     super(obj)
   }
 }
 
-class ReaperMidiItem extends ReaperBase {
+class ReaperAudioSource extends ReaperBase {
   /**
    * @param {ReaData} obj
    */
   constructor (obj) {
     if (!obj) {
       obj = parser.parse(
-`<ITEM
-POSITION 0
-LENGTH 2
-NAME "untitled MIDI item"
-  <SOURCE MIDI
-  >
+`<SOURCE WAVE
 >`)
     }
     super(obj)
+  }
+}
 
-    for (const i in obj.contents) {
-      if (this.contents[i].token === 'SOURCE' && this.contents[i].params[0] === 'MIDI') {
-        this.contents[i] = ReaperMidiItem.cleanMidi(this.contents[i])
-      }
+class ReaperMidiSource extends ReaperBase {
+  /**
+   * @param {ReaData} obj
+   */
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<SOURCE MIDI
+>`)
     }
+    super(obj);
+    this.contents = ReaperMidiSource.cleanMidi(this)
   }
 
   /**
@@ -210,7 +198,7 @@ NAME "untitled MIDI item"
         }
       }
     }
-    return obj
+    return obj.contents
   }
 }
 
@@ -439,7 +427,7 @@ class Tests {
       case 'string':
         return ReaperBase.dumpString(input)
       case 'midi':
-        return ReaperMidiItem.getMidiMessage(input)
+        return ReaperMidiSource.getMidiMessage(input)
       default:
         return input.dump()
     }
@@ -448,14 +436,15 @@ class Tests {
 
 module.exports = {
   ReaperProject,
+  ReaperItem,
   ReaperVst,
   ReaperTrack,
-  ReaperAudioItem,
+  ReaperAudioSource,
   ReaperNotes,
   Tests,
   ReaperFXChain,
   ReaperPluginAutomation,
-  ReaperMidiItem,
+  ReaperMidiSource,
   ReaperPanAutomation,
   ReaperVolumeAutomation,
   ReaperWidthAutomation

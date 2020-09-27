@@ -7,9 +7,10 @@ const ReaperBase = require('../src/reaper-base')
 const {
   ReaperProject,
   ReaperVst,
+  ReaperItem,
   ReaperTrack,
-  ReaperAudioItem,
-  ReaperMidiItem,
+  ReaperAudioSource,
+  ReaperMidiSource,
   ReaperFXChain
 } = require('../src/reaper-objects')
 const specialize = require('../src/specialize')
@@ -58,20 +59,20 @@ describe('specializer', function () {
       })).dump().should.deepEqual('<TRACK\n  NAME scream\n>')
     })
 
-    it('should add an ReaperAudioItem to TRACK objects', function () {
+    it('should add an ReaperAudioSource to TRACK objects', function () {
       specialize(new ReaperBase({
         token: 'TRACK',
         params: [],
         contents: [
           { token: 'NAME', params: ['scream'] }
         ]
-      })).addAudioItem(new ReaperAudioItem({
+      })).addItem(new ReaperItem({
         token: 'ITEM',
         params: [],
         contents: [
           { token: 'POSITION', params: [2] },
           { token: 'LENGTH', params: [0.10179138321995] },
-          new ReaperBase({
+          new ReaperAudioSource({
             token: 'SOURCE',
             params: ['WAVE'],
             contents: [
@@ -84,13 +85,13 @@ describe('specializer', function () {
         params: [],
         contents: [
           { token: 'NAME', params: ['scream'] },
-          new ReaperAudioItem({
+          new ReaperItem({
             token: 'ITEM',
             params: [],
             contents: [
               { token: 'POSITION', params: [2] },
               { token: 'LENGTH', params: [0.10179138321995] },
-              new ReaperBase({
+              new ReaperAudioSource({
                 token: 'SOURCE',
                 params: ['WAVE'],
                 contents: [
@@ -103,20 +104,20 @@ describe('specializer', function () {
       }))
     })
 
-    it('should add an ReaperMidiItem object to TRACK objects', function () {
+    it('should add an ReaperMidiSource object to TRACK objects', function () {
       specialize(new ReaperBase({
         token: 'TRACK',
         params: [],
         contents: [
           { token: 'NAME', params: ['scream'] }
         ]
-      })).addMidiItem(new ReaperMidiItem({
+      })).addItem(new ReaperItem({
         token: 'ITEM',
         params: [],
         contents: [
           { token: 'POSITION', params: [2] },
           { token: 'LENGTH', params: [2] },
-          new ReaperBase({
+          new ReaperMidiSource({
             token: 'SOURCE',
             params: ['MIDI'],
             contents: [
@@ -132,13 +133,13 @@ describe('specializer', function () {
         params: [],
         contents: [
           { token: 'NAME', params: ['scream'] },
-          new ReaperMidiItem({
+          new ReaperItem({
             token: 'ITEM',
             params: [],
             contents: [
               { token: 'POSITION', params: [2] },
               { token: 'LENGTH', params: [2] },
-              new ReaperBase({
+              new ReaperMidiSource({
                 token: 'SOURCE',
                 params: ['MIDI'],
                 contents: [
@@ -154,7 +155,7 @@ describe('specializer', function () {
       }))
     })
 
-    it('should dump ReaperMidiItem objects', function () {
+    it('should dump ReaperMidiSource objects', function () {
       specialize(new ReaperBase({
         token: 'ITEM',
         params: [],
@@ -188,7 +189,7 @@ describe('specializer', function () {
 >`)
     })
 
-    it('should dump ReaperAudioItem objects', function () {
+    it('should dump ReaperAudioSource objects', function () {
       specialize(new ReaperBase({
         token: 'ITEM',
         params: [],
