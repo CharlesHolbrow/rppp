@@ -68,7 +68,7 @@ class ReaperItem extends ReaperBase {
   }
 }
 
-class ReaperAudioSource extends ReaperBase {
+class ReaperSource extends ReaperBase {
   /**
    * @param {ReaData} obj
    */
@@ -79,31 +79,66 @@ class ReaperAudioSource extends ReaperBase {
 >`)
     }
     super(obj)
+    if (this.isMidiSource()) this.cleanMidi()
   }
-}
 
-class ReaperMidiSource extends ReaperBase {
+  isWaveSource () { return this.params[0] === 'WAVE' }
+  isMidiSource () { return this.params[0] === 'MIDI' }
+
+  makeWaveSource () {
+    this.params[0] = 'WAVE'
+    return this
+  }
+
+  makeMidiSource () {
+    this.params[0] = 'MIDI'
+    this.cleanMidi()
+    return this
+  }
+
   /**
-   * @param {ReaData} obj
+   * Some numbers in the midi note should actually be strings and have to be cleaned.
    */
-  constructor (obj) {
-    if (!obj) {
-      obj = parser.parse(
-`<SOURCE MIDI
->`)
+  cleanMidi () {
+    if (!this.isMidiSource()) throw new Error('cleanMidi only works on MIDI sources')
+    for (var i = 0; i < this.contents.length; i++) {
+      if (['E', 'e', 'X', 'x', 'Em', 'em', 'Xm', 'xm'].indexOf(this.contents[i].token) >= 0) {
+        for (var j = 1; j < 4; j++) {
+          this.contents[i].params[j] = this.contents[i].params[j].toString() // Make the last three parameters be two character strings
+          if (this.contents[i].params[j].length < 2) {
+            this.contents[i].params[j] = '0' + this.contents[i].params[j]
+          }
+        }
+      }
     }
-    super(obj);
-    this.contents = ReaperMidiSource.cleanMidi(this)
+    return this.contents
   }
 
   /**
-   * Converts an array of MidiNotes into midi messages following the specification here:
+   * Set this to a MIDI source. Replace the objects contents with midi notes.
+   * @param {Object[]} notes Array of objects that look like this:
+   *  { c: midiChannel (0-15), l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }
+   */
+  setMidiNotes (notes) {
+    this.makeMidiSource()
+    this.contents = ReaperSource.midiMessagesToContents(notes)
+  }
+
+  /**
+   * Converts an array of MidiNotes into a rppp-style .contents array
    * https://wiki.cockos.com/wiki/index.php/StateChunkAndRppMidiFormat
    *
    * @param {MidiNote[]} midiArray
    * @param {Object} midiSettings
    *
-   * Outputs something like this:
+   * Input is an array of objects that looks like this
+   * ```
+   * [
+   *   { c: midiChannel (0-15), l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }
+   * ]
+   * ```
+   * Output looks like this like this:
+   * ```
    * [
    *   {token: 'HASDATA', params: [1, 960, 'QN']},
    *   {token: 'E', params: [0, 90, '3c', 60]},
@@ -112,11 +147,9 @@ class ReaperMidiSource extends ReaperBase {
    *   {token: 'X', params: [2^32 + 1, '90', '3c', 00]},
    *   {token: 'X', params: [2^32 + 1, '80', '3c', 00]},
    * ]
-   *
-   * from a format like:
-   *   { c: midiChannel (0-15), l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }
+   * ```
    */
-  static getMidiMessage (midiArray, midiSettings = { ticksQN: 960 }) {
+  static midiMessagesToContents (midiArray, midiSettings = { ticksQN: 960 }) {
     const conversion = 4
     const ticksWholeNotes = midiSettings.ticksQN * conversion
 
@@ -181,24 +214,6 @@ class ReaperMidiSource extends ReaperBase {
     }
 
     return midiMessage
-  }
-
-  /**
-   * Some numbers in the midi note should actually be strings and have to be cleaned.
-   * @param {ReaData} obj
-   */
-  static cleanMidi (obj) {
-    for (var i = 0; i < obj.contents.length; i++) {
-      if (['E', 'e', 'X', 'x', 'Em', 'em', 'Xm', 'xm'].indexOf(obj.contents[i].token) >= 0) {
-        for (var j = 1; j < 4; j++) {
-          obj.contents[i].params[j] = obj.contents[i].params[j].toString() // Make the last three parameters be two character strings
-          if (obj.contents[i].params[j].length < 2) {
-            obj.contents[i].params[j] = '0' + obj.contents[i].params[j]
-          }
-        }
-      }
-    }
-    return obj.contents
   }
 }
 
@@ -427,7 +442,7 @@ class Tests {
       case 'string':
         return ReaperBase.dumpString(input)
       case 'midi':
-        return ReaperMidiSource.getMidiMessage(input)
+        return ReaperSource.midiMessagesToContents(input)
       default:
         return input.dump()
     }
@@ -439,12 +454,11 @@ module.exports = {
   ReaperItem,
   ReaperVst,
   ReaperTrack,
-  ReaperAudioSource,
+  ReaperSource,
   ReaperNotes,
   Tests,
   ReaperFXChain,
   ReaperPluginAutomation,
-  ReaperMidiSource,
   ReaperPanAutomation,
   ReaperVolumeAutomation,
   ReaperWidthAutomation

@@ -9,8 +9,7 @@ const {
   ReaperVst,
   ReaperItem,
   ReaperTrack,
-  ReaperAudioSource,
-  ReaperMidiSource,
+  ReaperSource,
   ReaperFXChain
 } = require('../src/reaper-objects')
 const specialize = require('../src/specialize')
@@ -72,7 +71,7 @@ describe('specializer', function () {
         contents: [
           { token: 'POSITION', params: [2] },
           { token: 'LENGTH', params: [0.10179138321995] },
-          new ReaperAudioSource({
+          new ReaperSource({
             token: 'SOURCE',
             params: ['WAVE'],
             contents: [
@@ -91,7 +90,7 @@ describe('specializer', function () {
             contents: [
               { token: 'POSITION', params: [2] },
               { token: 'LENGTH', params: [0.10179138321995] },
-              new ReaperAudioSource({
+              new ReaperSource({
                 token: 'SOURCE',
                 params: ['WAVE'],
                 contents: [
@@ -117,7 +116,7 @@ describe('specializer', function () {
         contents: [
           { token: 'POSITION', params: [2] },
           { token: 'LENGTH', params: [2] },
-          new ReaperMidiSource({
+          new ReaperSource({
             token: 'SOURCE',
             params: ['MIDI'],
             contents: [
@@ -139,7 +138,7 @@ describe('specializer', function () {
             contents: [
               { token: 'POSITION', params: [2] },
               { token: 'LENGTH', params: [2] },
-              new ReaperMidiSource({
+              new ReaperSource({
                 token: 'SOURCE',
                 params: ['MIDI'],
                 contents: [
@@ -155,7 +154,7 @@ describe('specializer', function () {
       }))
     })
 
-    it('should dump ReaperMidiSource objects', function () {
+    it('should dump ReaperSource objects with "MIDI" param', function () {
       specialize(new ReaperBase({
         token: 'ITEM',
         params: [],
@@ -189,7 +188,7 @@ describe('specializer', function () {
 >`)
     })
 
-    it('should dump ReaperAudioSource objects', function () {
+    it('should dump ReaperSource objects with "WAVE" param', function () {
       specialize(new ReaperBase({
         token: 'ITEM',
         params: [],
