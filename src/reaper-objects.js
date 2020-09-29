@@ -119,9 +119,9 @@ class ReaperSource extends ReaperBase {
    * @param {Object[]} notes Array of objects that look like this:
    *  { c: midiChannel (0-15), l: lengthWholeNotes, n: midiNoteNumber, s: startTimeWholeNotes, v: velocity (0-127) }
    */
-  setMidiNotes (notes) {
+  setMidiNotes (notes, lengthInWholeNotes) {
     this.makeMidiSource()
-    this.contents = ReaperSource.midiMessagesToContents(notes)
+    this.contents = ReaperSource.midiMessagesToContents(notes, lengthInWholeNotes)
   }
 
   /**
@@ -129,7 +129,7 @@ class ReaperSource extends ReaperBase {
    * https://wiki.cockos.com/wiki/index.php/StateChunkAndRppMidiFormat
    *
    * @param {MidiNote[]} midiArray
-   * @param {Object} midiSettings
+   * @param {number} [lengthInWholeNotes]
    *
    * Input is an array of objects that looks like this
    * ```
@@ -149,11 +149,15 @@ class ReaperSource extends ReaperBase {
    * ]
    * ```
    */
-  static midiMessagesToContents (midiArray, midiSettings = { ticksQN: 960 }) {
-    const conversion = 4
-    const ticksWholeNotes = midiSettings.ticksQN * conversion
+  static midiMessagesToContents (midiArray, lengthInWholeNotes) {
+    const ticksPerQuarterNote = 960
+    const ticksPerWholeNote = ticksPerQuarterNote * 4
 
-    const midiMessage = [{ token: 'HASDATA', params: [1, midiSettings.ticksQN, 'QN'] }]
+    // Reaper uses an all notes off message to indicate the "source length"
+    const insertAllNotesOff = typeof lengthInWholeNotes === 'number'
+    const allNotesOffTicks = insertAllNotesOff ? Math.ceil(ticksPerWholeNote * lengthInWholeNotes) : 0
+
+    const midiMessage = [{ token: 'HASDATA', params: [1, ticksPerQuarterNote, 'QN'] }]
 
     /**
      * Function for cleaning input and generating a Reaper midi message.
@@ -175,17 +179,26 @@ class ReaperSource extends ReaperBase {
       return res
     }
 
-    // Generate a 3D array to store start/stop times for each note on each channel.
+    // midiData stores midi events in an intermediary format. It will be sorted
+    // by the .tick member of each item, before each item is converted to the
+    // RPP format. There are two different types of objects that can go into
+    // midiData:
+    // 1. Note: { tick: number, status: string, v: number, c: number: n: number}
+    // 2. Other: { tick: number, status: string, byte1: string, byte2: string }
+    //
+    // Notice that in the first format, the status string contains a nibble, and
+    // the .c property contains contains the second nibble of the status byte.
     const midiData = [{ tick: 0 }]
     for (const note of midiArray) {
       if (!note.c) note.c = 0
       if (!note.v) note.v = 64
-      const startTick = note.s * ticksWholeNotes
-      const lengthTick = note.l * ticksWholeNotes
+      const startTick = note.s * ticksPerWholeNote
+      const lengthTick = note.l * ticksPerWholeNote
 
       midiData.push({ tick: startTick, status: '9', v: note.v, c: note.c, n: note.n })
       midiData.push({ tick: startTick + lengthTick, status: '8', v: note.v, c: note.c, n: note.n })
     }
+    if (insertAllNotesOff) midiData.push({ tick: allNotesOffTicks, status: 'b0', byte1: '7b', byte2: '00' })
 
     midiData.sort(function compare (a, b) {
       return a.tick - b.tick
@@ -193,16 +206,26 @@ class ReaperSource extends ReaperBase {
 
     // Loop through each start/stop command and generate its corresponding midi message.
     for (var i = 1; i < midiData.length; i++) {
-      const channel = midiData[i].c.toString(16)
-      if (channel.length > 1) throw new Error('midi channel has to be between 0 and 15')
+      let midiByteS, midiByte1, midiByte2 // 3 strings
 
-      let midin = midiData[i].n.toString(16)
-      if (midin.length < 2) midin = '0' + midin
-      if (midin.length > 2) throw new Error('midi note has to be between 0 and 127')
+      if (Object.prototype.hasOwnProperty.call(midiData[i], 'byte1')) {
+        midiByteS = midiData[i].status
+        midiByte1 = midiData[i].byte1
+        midiByte2 = midiData[i].byte2
+      } else {
+        const channel = midiData[i].c.toString(16)
+        if (channel.length !== 1) throw new Error('midi channel has to be between 0 and 15')
 
-      let midiv = midiData[i].v.toString(16)
-      if (midiv.length < 2) midiv = '0' + midiv
-      if (midiv.length > 2) throw new Error('midi velocity has to be between 0 and 127')
+        midiByteS = midiData[i].status + channel // status byte
+
+        midiByte1 = midiData[i].n.toString(16)
+        if (midiByte1.length < 2) midiByte1 = '0' + midiByte1
+        if (midiByte1.length > 2) throw new Error('midi note has to be between 0 and 127')
+
+        midiByte2 = midiData[i].v.toString(16)
+        if (midiByte2.length < 2) midiByte2 = '0' + midiByte2
+        if (midiByte2.length > 2) throw new Error('midi velocity has to be between 0 and 127')
+      }
 
       let eventId = 'E'
       const offset = midiData[i].tick - midiData[i - 1].tick
@@ -210,7 +233,7 @@ class ReaperSource extends ReaperBase {
         eventId = 'X'
       }
 
-      midiMessage.push({ token: eventId, params: note(offset, midiData[i].status + channel, midin, midiv) })
+      midiMessage.push({ token: eventId, params: note(offset, midiByteS, midiByte1, midiByte2) })
     }
 
     return midiMessage
