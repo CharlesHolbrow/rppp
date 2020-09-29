@@ -1,6 +1,6 @@
 {
   "name": "rppp",
-  "version": "0.2.0-5",
+  "version": "0.2.0-6",
   "description": "Reaper .RPP Parser",
   "main": "src/index.js",
   "scripts": {
