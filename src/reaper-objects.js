@@ -163,6 +163,7 @@ class ReaperSource extends ReaperBase {
      * Function for cleaning input and generating a Reaper midi message.
      */
     const note = (offset, channelAndStatus, midin, midiv) => {
+      offset = Math.round(offset)
       const res = []
       if (offset > Math.pow(2, 32) - 1) {
         res.push(offset - Math.pow(2, 32) - 1)
