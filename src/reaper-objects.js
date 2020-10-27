@@ -49,6 +49,45 @@ class ReaperTrack extends ReaperBase {
   }
 
   /**
+   * Add a receive (from another track) to this track
+   * @param {object} options
+   * @param {number} [options.sourceTrackNumber=0] reaper stores tracks in a flat
+   *    array, even when those tracks have nested layers. This references the
+   *    absolute track index, (starting from 0)
+   * @param {number} [options.gain] 0.5 is approximately -6.02db
+   * @param {number} [options.pan] 0=center, -1=left, 1=right
+   * @param {string} [options.name] give the send a name (untested)
+   */
+  addReceive ({ sourceTrackNumber = 0, gain = 1, pan = 0, name = '' }) {
+    const receive = this.createStruct('AUXRECV', this.contents.length)
+    receive.params = [
+      sourceTrackNumber,
+      0,
+      gain,
+      pan,
+      0, // mute `0=unmuted`, `1=muted`
+      0, // orange Button with two circles
+      0, // Phase invert `1=inverted`
+
+      // audio source channel(s)
+      // `-1="None"`, `1024= (mono) ch1`, `1025=(mono) ch2`
+      // `0=(stereo) ch1+2`, `1=(stereo) ch2+3`, `2=(stereo) ch3+4`
+      0,
+      0, // audio dest channel(s)
+      '-1:U', // ???
+
+      // midi source/destination channels
+      // `0=send receive all midi channels`, `1=send ch1, receive on all ch`, `33 send ch1, receive ch1`
+      // `1024=MidiOnly(all channels)`, `1025=MidiOnly(ch1)`, Doesn't send audio
+      0,
+      -1, // automation mode `-1='track automation mode`
+      name // name?
+    ]
+
+    return receive
+  }
+
+  /**
    * @param {ReaperItem} obj
    */
   addItem (obj) {
