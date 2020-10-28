@@ -66,7 +66,7 @@ class ReaperTrack extends ReaperBase {
       gain,
       pan,
       0, // mute `0=unmuted`, `1=muted`
-      0, // orange Button with two circles
+      0, // source track's pan bypass (ven-diagram icon in routing panel)
       0, // Phase invert `1=inverted`
 
       // audio source channel(s)
