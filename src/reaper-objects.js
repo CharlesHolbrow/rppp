@@ -57,8 +57,13 @@ class ReaperTrack extends ReaperBase {
    * @param {number} [options.gain] 0.5 is approximately -6.02db
    * @param {number} [options.pan] 0=center, -1=left, 1=right
    * @param {string} [options.name] give the send a name (untested)
+   * @param {number} [options.sourceChannels] indicates which channels on the
+   *    sourceTrack to send. `-1="None"`, `1024= (mono) ch1`, `1025=(mono) ch2`
+   *    `0=(stereo) ch1+2`, `1=(stereo) ch2+3`, `2=(stereo) ch3+4`
+   * @param {number} [options.destinationChannels] indicate on which channels to
+   *    receive audio
    */
-  addReceive ({ sourceTrackNumber = 0, gain = 1, pan = 0, name = '' }) {
+  addReceive ({ sourceTrackNumber = 0, gain = 1, pan = 0, name = '', sourceChannel = 0, destinationChannel = 0 }) {
     const receive = this.createStruct('AUXRECV', this.contents.length)
     receive.params = [
       sourceTrackNumber,
@@ -69,11 +74,22 @@ class ReaperTrack extends ReaperBase {
       0, // source track's pan bypass (ven-diagram icon in routing panel)
       0, // Phase invert `1=inverted`
 
-      // audio source channel(s)
+      // sourceChannels controls how many channels are sent. It looks like the
+      // least significant 10 bits indicate the starting channel and then the
+      // subsequent bits indicate the number of channels. For example:
+      //
       // `-1="None"`, `1024= (mono) ch1`, `1025=(mono) ch2`
       // `0=(stereo) ch1+2`, `1=(stereo) ch2+3`, `2=(stereo) ch3+4`
-      0,
-      0, // audio dest channel(s)
+      //
+      // The general case is:
+      // startingChannelNumber + 0 // stereo
+      // startingChannelNumber + (1<<10) // 1 channel/mono
+      // startingChannelNumber + (2<<10) // 4 channels
+      // startingChannelNumber + (3<<10) // 6 channels
+      // startingChannelNumber + (4<<10) // 8 channels, etc
+      sourceChannel, // audio source channel(s)
+      // unlike sourceChannel, destination value does not include channel count
+      destinationChannel, // audio dest channel
       '-1:U', // ???
 
       // midi source/destination channels
