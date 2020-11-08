@@ -123,6 +123,7 @@ class ReaperSource extends ReaperBase {
 
   isWaveSource () { return this.params[0] === 'WAVE' }
   isMidiSource () { return this.params[0] === 'MIDI' }
+  isMp3Source () { return this.params[0] === 'MP3' }
 
   makeWaveSource () {
     this.params[0] = 'WAVE'
@@ -132,6 +133,11 @@ class ReaperSource extends ReaperBase {
   makeMidiSource () {
     this.params[0] = 'MIDI'
     this.cleanMidi()
+    return this
+  }
+
+  makeMp3Source () {
+    this.params[0] = 'MP3'
     return this
   }
 
