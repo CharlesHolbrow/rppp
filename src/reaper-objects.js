@@ -234,9 +234,12 @@ class ReaperSource extends ReaperBase {
    * objects. This method copies the underlying SOURCE WAVE/MP3/MIDI object, and
    * moves the copy into a child SOURCE object, converting the original SOURCE
    * object into a SOURCE SECTION object, and adding SECTION specific structs
-   * to .this (LENGTH, MODE, STARTPOS, OVERLAP).
+   * to .this (added: LENGTH, MODE, STARTPOS. omitted: OVERLAP).
    *
    * For SOURCE objects that are already SECTIONs, do nothing.
+   *
+   * See https://github.com/ReaTeam/Doc/blob/master/State%20Chunk%20Definitions
+   * for info about `<SOURCE SECTION` objects
    */
   makeSectionSource () {
     if (this.isSectionSource()) return this
@@ -273,7 +276,6 @@ class ReaperSource extends ReaperBase {
     this.getOrCreateStructByToken('LENGTH').params[0] = 0
     this.getOrCreateStructByToken('MODE').params[0] = 1
     this.getOrCreateStructByToken('STARTPOS').params[0] = 0
-    this.getOrCreateStructByToken('OVERLAP').params[0] = 0
     this.contents.push(childSource)
 
     return this
