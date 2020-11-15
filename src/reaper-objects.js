@@ -121,6 +121,68 @@ class ReaperItem extends ReaperBase {
     }
     super(obj)
   }
+
+  /**
+   * Find all SOURCE objects, and reverse them if possible. This is intended to
+   * work with simple items that have one AUDIO source. Some caveats:
+   * (1) reverseSources is intended for items with audio SOURCEs (ex. WAVE, MP3)
+   * (2) ITEMs with SOURCE MIDI sources cannot be reversed. Trying to reverse an
+   *     ITEM with SOURCE MIDI contents will print a warning message
+   * (3) ITEMs may have multiple SOURCE children in the .contents array (for
+   *     example, when the underlying Reaper ITEM has multiple takes). These
+   *     ITEMS will have only one active take in reaper, but this method will
+   *     reverse ALL the possible immediate children. I have not tested the case
+   *     where an item has multiple complex child sources that are offset from
+   *     each other.
+   * (4) To reverse, sources must be converted to `<SOURCE SECTION...` objects.
+   *     This conversion happens automatically, but for SOURCEs that are already
+   *     SECTION sources, the behavior may be unpredictable.
+   * (5) reverseSources will not un-reverse sources that are already reversed
+   *
+   * Other general notes about reversed ITEMS:
+   * - For reversed sources, SOFFS ('Start in source') measures from the END of
+   *   the source file
+   */
+  reverseSources () {
+    let found = 0
+    this.contents.forEach((obj, i, all) => {
+      if (obj.token === 'SOURCE') {
+        let source = obj
+        if (!(obj instanceof ReaperSource)) {
+          source = new ReaperSource(obj)
+          all[i] = source
+        }
+
+        // Reaper does not support reversing MIDI ITEMs in this way
+        if (source.isMidiSource()) {
+          const msg = 'cannot reverse a `<SOURCE MIDI` object'
+          console.warn('WARNING: rppp ' + msg)
+          return
+        }
+
+        source.makeSectionSource()
+        const childSource = source.getStructByToken('SOURCE')
+        if (!childSource) {
+          const msg = 'tried to reverse a SOURCE SECTION with no children'
+          console.warn('WARNING: rpp ' + msg)
+          return
+        }
+
+        const modeStruct = source.getStructByToken('MODE')
+        if (!modeStruct) source.getOrCreateStructByToken('MODE').params[0] = 2
+        else source.getOrCreateStructByToken('MODE').params[0] = 3
+
+        if (childSource.getStructByToken('SOURCE', 1)) {
+          const msg = 'reversed only the first SOURCE object in a child source ' + source.dump()
+          console.warn('WARNING: rpp ' + msg)
+        }
+
+        if (++found > 1) {
+          console.warn('WARNING: rpp reversed an item with more than one immediate child SOURCE.')
+        }
+      }
+    })
+  }
 }
 
 class ReaperSource extends ReaperBase {
@@ -140,20 +202,80 @@ class ReaperSource extends ReaperBase {
   isWaveSource () { return this.params[0] === 'WAVE' }
   isMidiSource () { return this.params[0] === 'MIDI' }
   isMp3Source () { return this.params[0] === 'MP3' }
+  isSectionSource () { return this.params[0] === 'SECTION' }
 
   makeWaveSource () {
+    if (this.isSectionSource()) {
+      throw new Error('Cannot convert `<SOURCE SECTION` object to `<SOURCE WAV`')
+    }
     this.params[0] = 'WAVE'
     return this
   }
 
   makeMidiSource () {
+    if (this.isSectionSource()) {
+      throw new Error('Cannot convert `<SOURCE SECTION` object to `<SOURCE MIDI`')
+    }
     this.params[0] = 'MIDI'
     this.cleanMidi()
     return this
   }
 
   makeMp3Source () {
+    if (this.isSectionSource()) {
+      throw new Error('Cannot convert `<SOURCE SECTION` object to `<SOURCE MP3`')
+    }
     this.params[0] = 'MP3'
+    return this
+  }
+
+  /**
+   * Reaper ITEMs may contain `<SOURCE SECTION` objects containing child SOURCE
+   * objects. This method copies the underlying SOURCE WAVE/MP3/MIDI object, and
+   * moves the copy into a child SOURCE object, converting the original SOURCE
+   * object into a SOURCE SECTION object, and adding SECTION specific structs
+   * to .this (LENGTH, MODE, STARTPOS, OVERLAP).
+   *
+   * For SOURCE objects that are already SECTIONs, do nothing.
+   */
+  makeSectionSource () {
+    if (this.isSectionSource()) return this
+
+    if (this.getStructByToken('SOURCE')) {
+      // If this happens, it is probably a bug in the consuming code. I do not
+      // believe that non-SECTION source objects (such as WAVE or MP3) should
+      // ever have children.
+      console.warn('WARNING: rppp called .makeSectionSource on an object that already has one or more SOURCE children. This may result in bugs')
+    }
+
+    const childSource = new ReaperSource(this)
+    this.params = ['SECTION']
+    this.contents = []
+
+    // SECTION sources have a bunch of structs that WAVE/MP3 sources do not.
+    // I believe that the LENGTH, STARTPOS, and (probably) OVERLAP structs are
+    // ignored unless the 'Section' checkbox (found in the Reaper item's
+    // properties window) is checked.
+    //
+    // Note the MODE struct:
+    // - when MODE is not present, it indicates that the 'Section' checkbox in
+    //   the Reaper item's properties is checked, but the 'Reverse' checkbox is
+    //   not checked.
+    //
+    // - MODE 1: this appears to be the default. It seems to indicate that
+    //   neither of the 'Reverse' or 'Section' checkboxes in the Reaper item
+    //   properties are checked. I believe that this mode ignores values in the
+    //   LENGTH, STARTPOS, and (probably) OVERLAP structs
+    //
+    // - MODE 2: Indicates that both 'Reverse' and 'Section' boxes are checked.
+    //
+    // - MODE 3: Indicates that 'Reverse' is checked, and 'Section' is not
+    this.getOrCreateStructByToken('LENGTH').params[0] = 0
+    this.getOrCreateStructByToken('MODE').params[0] = 1
+    this.getOrCreateStructByToken('STARTPOS').params[0] = 0
+    this.getOrCreateStructByToken('OVERLAP').params[0] = 0
+    this.contents.push(childSource)
+
     return this
   }
 
