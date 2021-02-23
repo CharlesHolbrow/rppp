@@ -627,6 +627,63 @@ class ReaperWidthAutomation extends ReaperAutomationTrack {
   }
 }
 
+
+/**
+ * Tempo and time signature Automation. Like other automation objects, this
+ * appends `PT` structs for each automation point. `PT` structs typically have
+ * either 3 or 6 fields:
+ *
+ *  1. Start time in seconds,
+ *  2. new bpm
+ *  3. curve type. 0=linear, 1=square (no other types available) (further args are optional. Their presence indicate a time signature change)
+ *  4. time signature expressed as two 16 bit ints in a 32 bit int f = (num, demon) => ((num << 16) + demon)
+ *  5. 1=selected, 0=unselected
+ *  6. Some kind of mode indicator. A bitmask?
+ *       `1`= set tempo and set time signature
+ *       `3`= only set time signature,
+ *       `5`= allow partial measure before next bar, set time signature, set tempo
+ *       `7`= allow partial mesaure before next bar, set time signature, don't set tempo
+ *
+ */
+class ReaperTempoTimeSigAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<TEMPOENVEX
+  ACT 1 -1
+  VIS 1 0 1
+  LANEHEIGHT 0 0
+  ARM 0
+  DEFSHAPE 1 -1 -1
+>`)
+    }
+    super(obj)
+  }
+
+  /**
+   * Add a time signature automation point (without tempo automation info). You
+   * are responsible for making sure that (1) the timeSeconds value exactly
+   * corresponds to the start of a new measure, and (2) upper/lower make a valid
+   * time signature, and (3) you call this in order, so that timeSeconds values
+   * are ascending.
+   *
+   * @param {number} upper time signature "numerator"
+   * @param {number} lower time signature "demonimator"
+   * @param {number} [timeSeconds = 0] position of the time signature on the
+   * timeline. Make sure that this value exactly corresponds to the start of a
+   * measure.
+   * @param {number} [mode = 1] 1=square, 0=linear
+   */
+  addTimeSignature(upper, lower, timeSeconds=0, mode=1) {
+    if (typeof timeSeconds !== 'number') throw new TypeError(`timeSeconds must be a number`)
+    if (typeof upper !== 'number' || upper < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
+    if (typeof lower !== 'number' || lower < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
+    if (![0, 1].includes(mode)) throw new TypeError(`invalid time signature mode: ${mode}`)
+    const reaTimeSig = (lower << 16) + upper
+    this.add({ token: 'PT', params: [timeSeconds, 120, mode, reaTimeSig, 0, 3] })
+  }
+}
+
 /**
  * Serializes an object and outputs it as an RPP file.
  */
@@ -670,5 +727,6 @@ module.exports = {
   ReaperPluginAutomation,
   ReaperPanAutomation,
   ReaperVolumeAutomation,
-  ReaperWidthAutomation
+  ReaperWidthAutomation,
+  ReaperTempoTimeSigAutomation,
 }

@@ -41,6 +41,8 @@ function specialize (obj) {
     case 'WIDTHENV2':
       obj = new rea.ReaperWidthAutomation(obj)
       break
+    case 'TEMPOENVEX':
+      obj = new rea.ReaperTempoTimeSigAutomation(obj)
     default:
       break
   }
