@@ -19,5 +19,9 @@
     "should": "^13.2.3",
     "standard": "^14.3.4"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlesholbrow/rppp.git"
+  }
 }
