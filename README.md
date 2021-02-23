@@ -59,6 +59,8 @@ dump() // Dumps the current object into a string in the RPP format.
 
 Some Reaper objects have special formatting in RPP files, so the `rppp.specialize()` function can be called on an object to change their prototype to one with special support for dumping objects of that type.
 
+Some specialized objects also have helper methods for configuring their parameters.
+
 Currently, the specialize function supports the following prototypes:
 ```javascript
 ReaperProject //PROJECT 
@@ -71,6 +73,7 @@ ReaperFXChain //FXCHAIN
 ReaperVolumeAutomation //VOLENV2
 ReaperPanAutomation //PANENV2
 ReaperWidthAutomation //WIDTHENV2
+ReaperTempoTimeSigAutomation //TEMPOENVEX
 ```
 
 ### Example:

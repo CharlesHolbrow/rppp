@@ -43,6 +43,7 @@ function specialize (obj) {
       break
     case 'TEMPOENVEX':
       obj = new rea.ReaperTempoTimeSigAutomation(obj)
+      break
     default:
       break
   }

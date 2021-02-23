@@ -627,7 +627,6 @@ class ReaperWidthAutomation extends ReaperAutomationTrack {
   }
 }
 
-
 /**
  * Tempo and time signature Automation. Like other automation objects, this
  * appends `PT` structs for each automation point. `PT` structs typically have
@@ -635,17 +634,26 @@ class ReaperWidthAutomation extends ReaperAutomationTrack {
  *
  *  1. Start time in seconds,
  *  2. new bpm
- *  3. curve type. 0=linear, 1=square (no other types available) (further args are optional. Their presence indicate a time signature change)
- *  4. time signature expressed as two 16 bit ints in a 32 bit int f = (num, demon) => ((num << 16) + demon)
+ *  3. curve type. 0=linear, 1=square (no other types available) (further args
+ *     are optional. Their presence indicate a time signature change)
+ *  4. time signature expressed as two 16 bit ints in a 32 bit int f = (num,
+ *     demon) => ((denom << 16) + num)
  *  5. 1=selected, 0=unselected
  *  6. Some kind of mode indicator. A bitmask?
- *       `1`= set tempo and set time signature
- *       `3`= only set time signature,
- *       `5`= allow partial measure before next bar, set time signature, set tempo
- *       `7`= allow partial mesaure before next bar, set time signature, don't set tempo
+ *     - `1`= set tempo and set time signature
+ *     - `3`= only set time signature
+ *     - `5`= allow partial measure before next bar, set time signature, set
+ *       tempo
+ *     - `7`= allow partial mesaure before next bar, set time signature, don't
+ *       set tempo
  *
+ * However, the helpers abstract these fields. So you do not need to remember
  */
-class ReaperTempoTimeSigAutomation extends ReaperAutomationTrack {
+class ReaperTempoTimeSigAutomation extends ReaperBase {
+  // Note that this doesn't inherit from ReaperAutomationTrack. Tempo automation
+  // has some similar parameters, but it does not actually support bezier
+  // curves, and its subsequent arguments are specific to time signature
+  // automation.
   constructor (obj) {
     if (!obj) {
       obj = parser.parse(
@@ -661,26 +669,70 @@ class ReaperTempoTimeSigAutomation extends ReaperAutomationTrack {
   }
 
   /**
-   * Add a time signature automation point (without tempo automation info). You
-   * are responsible for making sure that (1) the timeSeconds value exactly
-   * corresponds to the start of a new measure, and (2) upper/lower make a valid
-   * time signature, and (3) you call this in order, so that timeSeconds values
-   * are ascending.
+   * Add a time signature automation point (without tempo automation info) to
+   * the end of the envelope. You are responsible for making sure that (1) the
+   * timeSeconds value exactly corresponds to the start of a new measure, and
+   * (2) upper/lower make a valid time signature, and (3) this is called in
+   * order, so that timeSeconds values are ascending.
+   *
+   * This will interrupt a tempo curve, so if this is in the middle of a tempo
+   * curve, you will need to use `addTempoTimeSignature`.
    *
    * @param {number} upper time signature "numerator"
    * @param {number} lower time signature "demonimator"
    * @param {number} [timeSeconds = 0] position of the time signature on the
    * timeline. Make sure that this value exactly corresponds to the start of a
    * measure.
-   * @param {number} [mode = 1] 1=square, 0=linear
    */
-  addTimeSignature(upper, lower, timeSeconds=0, mode=1) {
-    if (typeof timeSeconds !== 'number') throw new TypeError(`timeSeconds must be a number`)
+  addTimeSignature (upper, lower, timeSeconds = 0) {
+    if (typeof timeSeconds !== 'number') throw new TypeError('timeSeconds must be a number')
     if (typeof upper !== 'number' || upper < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
     if (typeof lower !== 'number' || lower < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
-    if (![0, 1].includes(mode)) throw new TypeError(`invalid time signature mode: ${mode}`)
     const reaTimeSig = (lower << 16) + upper
-    this.add({ token: 'PT', params: [timeSeconds, 120, mode, reaTimeSig, 0, 3] })
+    this.add({ token: 'PT', params: [timeSeconds, 120, 1, reaTimeSig, 0, 3] })
+  }
+
+  /**
+   * Add a tempo automation point to the end of the envelope. You must call
+   * this in order, so that timeSeconds values are ascending.
+   * @param {number} tempo the new tempo
+   * @param {number} [timeSeconds = 0] position of the time signature on the
+   * timeline. Make sure that this value exactly corresponds to the start of a
+   * measure.
+   * @param {number} [mode = 1] 1=square, 0=linear
+   */
+  addTempo (tempo, timeSeconds = 0, mode = 1) {
+    if (typeof tempo !== 'number') throw new TypeError('tempo must be a number')
+    if (typeof timeSeconds !== 'number') throw new TypeError('timeSeconds must be a number')
+    if (![0, 1].includes(mode)) throw new TypeError(`invalid time signature mode: ${mode}`)
+    this.add({ token: 'PT', params: [timeSeconds, tempo, mode] })
+  }
+
+  /**
+   * Add an automation point to the end of the envelope. The automation point
+   * will specify time signature AND tempo automation. You are responsible for
+   * making sure that (1) the timeSeconds value exactly corresponds to the start
+   * of a new measure, and (2) upper/lower make a valid time signature, and (3)
+   * this is called in order, so that timeSeconds values of all points in the
+   * envelope are ascending.
+   *
+   * This will interrupt an in-progress tempo curve.
+   *
+   * @param {number} upper time signature "numerator"
+   * @param {number} lower time signature "demonimator"
+   * @param {number} [timeSeconds = 0] position of the time signature on the
+   * timeline. Make sure that this value exactly corresponds to the start of a
+   * measure.
+   */
+  addTempoTimeSignature (tempo, upper, lower, timeSeconds, mode = 1) {
+    if (typeof tempo !== 'number') throw new TypeError('tempo must be a number')
+    if (typeof upper !== 'number' || upper < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
+    if (typeof lower !== 'number' || lower < 1) throw new TypeError(`invalid time signature: ${upper}/${lower}`)
+    if (typeof timeSeconds !== 'number') throw new TypeError('timeSeconds must be a number')
+    if (![0, 1].includes(mode)) throw new TypeError(`invalid time signature mode: ${mode}`)
+
+    const reaTimeSig = (lower << 16) + upper
+    this.add({ token: 'PT', params: [timeSeconds, 120, mode, reaTimeSig, 0, 1] })
   }
 }
 
@@ -728,5 +780,5 @@ module.exports = {
   ReaperPanAutomation,
   ReaperVolumeAutomation,
   ReaperWidthAutomation,
-  ReaperTempoTimeSigAutomation,
+  ReaperTempoTimeSigAutomation
 }
