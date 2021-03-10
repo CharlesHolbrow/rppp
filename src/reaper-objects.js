@@ -374,7 +374,7 @@ class ReaperSource extends ReaperBase {
     //
     // Notice that in the first format, the status string contains a nibble, and
     // the .c property contains contains the second nibble of the status byte.
-    const midiData = [{ tick: 0 }]
+    const midiData = []
     for (const note of midiArray) {
       if (!note.c) note.c = 0
       if (!note.v) note.v = 64
@@ -390,8 +390,13 @@ class ReaperSource extends ReaperBase {
       return a.tick - b.tick
     })
 
-    // Loop through each start/stop command and generate its corresponding midi message.
-    for (var i = 1; i < midiData.length; i++) {
+    // Notice that all tick values are still floating point. When we calculate
+    // the "offset" below, we convert to integers, which is ultimately how we
+    // measure time for midi events
+
+    // Loop through each note on/off event and generate its corresponding midi message.
+    let lastTickInt = 0
+    for (var i = 0; i < midiData.length; i++) {
       let midiByteS, midiByte1, midiByte2 // 3 strings
 
       if (Object.prototype.hasOwnProperty.call(midiData[i], 'byte1')) {
@@ -413,8 +418,11 @@ class ReaperSource extends ReaperBase {
         if (midiByte2.length > 2) throw new Error('midi velocity has to be between 0 and 127')
       }
 
+      // figure out how far we are from the previous tick
+      const offset = Math.round(midiData[i].tick - lastTickInt)
+      lastTickInt += offset
+
       let eventId = 'E'
-      const offset = midiData[i].tick - midiData[i - 1].tick
       if (offset > Math.pow(2, 32) - 1) {
         eventId = 'X'
       }
