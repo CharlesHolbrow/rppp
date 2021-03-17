@@ -38,6 +38,9 @@ function specialize (obj) {
     case 'PANENV2':
       obj = new rea.ReaperPanAutomation(obj)
       break
+    case 'AUXVOLENV':
+      obj = new rea.ReaperReceiveVolumeAutomation(obj)
+      break
     case 'WIDTHENV2':
       obj = new rea.ReaperWidthAutomation(obj)
       break

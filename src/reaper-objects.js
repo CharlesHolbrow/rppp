@@ -577,6 +577,17 @@ class ReaperPluginAutomation extends ReaperAutomationTrack {
   }
 }
 
+class ReaperReceiveVolumeAutomation extends ReaperAutomationTrack {
+  constructor (obj) {
+    if (!obj) {
+      obj = parser.parse(
+`<AUXVOLENV
+>`)
+    }
+    super(obj)
+  }
+}
+
 class ReaperNotes extends ReaperBase {
   /**
    * @param {ReaData} obj
@@ -786,6 +797,7 @@ module.exports = {
   ReaperFXChain,
   ReaperPluginAutomation,
   ReaperPanAutomation,
+  ReaperReceiveVolumeAutomation,
   ReaperVolumeAutomation,
   ReaperWidthAutomation,
   ReaperTempoTimeSigAutomation
