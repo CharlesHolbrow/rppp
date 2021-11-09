@@ -87,7 +87,7 @@ char_nodq       = !'"' c:char { return c }
 char_nobt       = !'`' c:char { return c }
 char_nosq       = !"'" c:char { return c }
 char_nosp       = !' ' c:char { return c }
-char            = [a-z 0-9!.,:@#$%^&*(){}<>_+/="'|`-]i
+char            = [a-zA-Z 0-9!.,:@#$%^&*(){}<>[\]_+/="'|`-]
 
 /* */
 decimal = txt:$(int "." digit*) { return parseFloat(txt); }

@@ -79,9 +79,9 @@ class ReaperBase {
   }
 
   /**
-     * Adds a ReaData object to the contents array of this object.
-     * @param {ReaData} obj
-     */
+   * Adds a ReaData object to the contents array of this object.
+   * @param {ReaData} obj
+   */
   add (obj) {
     if (!obj) throw new Error('An argument is needed to be added to the contents array')
     this.contents.push(obj)
