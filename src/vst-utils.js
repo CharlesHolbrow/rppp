@@ -147,8 +147,8 @@ class VstB64 {
   // format that is directly used in .RPP chunks.
 
   /**
-   * Convert a UInt8Array to a FirstLine instance
-   * @param {UInt8Array} data
+   * Convert a Uint8Array to a FirstLine instance
+   * @param {Uint8Array} data
    */
   static fromUint8Array (data) {
     if (!(data instanceof Uint8Array)) throw new Error('fromBuffer did not get a Uint8Array')

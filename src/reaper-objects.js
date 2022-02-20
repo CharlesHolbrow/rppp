@@ -55,10 +55,10 @@ class ReaperTrack extends ReaperBase {
    * @param {number} [options.gain] 0.5 is approximately -6.02db
    * @param {number} [options.pan] 0=center, -1=left, 1=right
    * @param {string} [options.name] give the send a name (untested)
-   * @param {number} [options.sourceChannels] indicates which channels on the
+   * @param {number} [options.sourceChannel] indicates which channels on the
    *    sourceTrack to send. `-1="None"`, `1024= (mono) ch1`, `1025=(mono) ch2`
    *    `0=(stereo) ch1+2`, `1=(stereo) ch2+3`, `2=(stereo) ch3+4`
-   * @param {number} [options.destinationChannels] indicate on which channels to
+   * @param {number} [options.destinationChannel] indicate on which channels to
    *    receive audio
    */
   addReceive ({ sourceTrackNumber = 0, gain = 1, pan = 0, name = '', sourceChannel = 0, destinationChannel = 0 }) {
@@ -284,9 +284,9 @@ class ReaperSource extends ReaperBase {
    */
   cleanMidi () {
     if (!this.isMidiSource()) throw new Error('cleanMidi only works on MIDI sources')
-    for (var i = 0; i < this.contents.length; i++) {
+    for (let i = 0; i < this.contents.length; i++) {
       if (['E', 'e', 'X', 'x', 'Em', 'em', 'Xm', 'xm'].indexOf(this.contents[i].token) >= 0) {
-        for (var j = 1; j < 4; j++) {
+        for (let j = 1; j < 4; j++) {
           this.contents[i].params[j] = this.contents[i].params[j].toString() // Make the last three parameters be two character strings
           if (this.contents[i].params[j].length < 2) {
             this.contents[i].params[j] = '0' + this.contents[i].params[j]
@@ -297,6 +297,14 @@ class ReaperSource extends ReaperBase {
     return this.contents
   }
 
+  /**
+   * @typedef MidiNote
+   * @member {number} c midiChannel (0-15)
+   * @member {number} l lengthWholeNotes
+   * @member {number} n midiNoteNumber
+   * @member {number} s startTimeWholeNotes
+   * @member {number} v velocity (0-127)
+   */
   /**
    * Set this to a MIDI source. Replace the objects contents with midi notes.
    * @param {Object[]} notes Array of objects that look like this:
@@ -394,7 +402,7 @@ class ReaperSource extends ReaperBase {
 
     // Loop through each note on/off event and generate its corresponding midi message.
     let lastTickInt = 0
-    for (var i = 0; i < midiData.length; i++) {
+    for (let i = 0; i < midiData.length; i++) {
       let midiByteS, midiByte1, midiByte2 // 3 strings
 
       if (Object.prototype.hasOwnProperty.call(midiData[i], 'byte1')) {
@@ -601,12 +609,12 @@ class ReaperNotes extends ReaperBase {
 
   dump (indent = 0) {
     const notes = this.params[0].split('\n')
-    var start = '  '.repeat(indent) + '<NOTES\n'
-    var body = ''
+    const start = '  '.repeat(indent) + '<NOTES\n'
+    let body = ''
     for (const line of notes) {
       body += '  '.repeat(indent + 1) + '|' + line + '\n'
     }
-    var end = '  '.repeat(indent) + '>'
+    const end = '  '.repeat(indent) + '>'
     return start + body + end
   }
 }

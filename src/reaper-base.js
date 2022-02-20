@@ -19,8 +19,8 @@
  * The ReaData type is suitable for passing in to the ReaperBase constructor
  * @typedef {Object} ReaData
  * @property {string} token Reaper token such as VST, TRACK, or NAME
- * @property {any[]} [params=[]] ex. ["hi", 5000]]
- * @property {ReaData[]} [contents=[]]
+ * @property {(number|string)[]} [params=[]] ex. ["hi", 5000]]
+ * @property {(ReaData|ReaperBase)[]} [contents=[]]
  * @property {(string|Stringable)[]} [b64Chunks=[]] each element is a string or an
  * object with a toString() method
  */
@@ -49,7 +49,7 @@ class ReaperBase {
     this.token = token
 
     /**
-     * @member {any[]} params Strings or numbers that follow the token
+     * @member {(number|string)[]} params Strings or numbers that follow the token
      */
     this.params = params
 
@@ -72,10 +72,10 @@ class ReaperBase {
 
   /**
    * Gets the `index`'th struct with token `token` and returns the object.
-   * If the `index`'th struct was not found, returns null.
+   * If the `index`'th struct was not found, returns undefined.
    * @param {string} token
    * @param {number} index
-   * @returns {ReaperBase|ReaData|null}
+   * @returns {ReaperBase|ReaData|undefined}
    */
   getStructByToken (token, index = 0) {
     let found = 0
@@ -87,7 +87,7 @@ class ReaperBase {
         found += 1
       }
     }
-    return null
+    return undefined
   }
 
   /**
