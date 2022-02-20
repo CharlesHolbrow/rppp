@@ -75,6 +75,7 @@ class ReaperBase {
    * If the `index`'th struct was not found, returns null.
    * @param {string} token
    * @param {number} index
+   * @returns {ReaperBase|ReaData|null}
    */
   getStructByToken (token, index = 0) {
     let found = 0
@@ -95,6 +96,7 @@ class ReaperBase {
    * it to the end of the contents array.
    * @param {string} token
    * @param {number} index
+   * @returns {ReaperBase|ReaData}
    */
   getOrCreateStructByToken (token, index = 0) {
     const struct = this.getStructByToken(token, index)
@@ -107,7 +109,7 @@ class ReaperBase {
    * @param {number} index
    */
   createStruct (token, index = 0) {
-    var obj = { token: token, params: [] }
+    const obj = { token: token, params: [] }
     this.contents.splice(index, 0, obj)
     return this.contents[index]
   }
@@ -136,7 +138,7 @@ class ReaperBase {
 
     body += this.dumpB64Chunks(indent + 1)
 
-    var end = '  '.repeat(indent) + '>'
+    const end = '  '.repeat(indent) + '>'
     return start + body + end
   }
 
@@ -180,7 +182,7 @@ class ReaperBase {
   }
 
   static dumpParams (params) {
-    var out = ''
+    let out = ''
     for (const param of params) {
       if (typeof param === 'number') out += ' ' + ReaperBase.dumpNum(param)
       else out += ' ' + ReaperBase.dumpString(param)
@@ -190,7 +192,7 @@ class ReaperBase {
 
   static dumpStruct (token, params, indent = 0) {
     const findSpecialStrings = function (params) {
-      var specialStrings = []
+      const specialStrings = []
       for (const param of params) {
         if (typeof param === 'string' && param.includes('"') && param.includes("'") && param.includes('`')) {
           specialStrings.push(param)
@@ -200,7 +202,7 @@ class ReaperBase {
     }
 
     const dumpSpecialStrings = function (token, special, indent) {
-      var res = ''
+      let res = ''
       for (const s of special) {
         const start = '\n  '.repeat(indent) + '<' + token + '\n'
         const body = '  '.repeat(indent + 1) + '|' + s + '\n'
@@ -210,9 +212,9 @@ class ReaperBase {
       return res
     }
 
-    var specialStrings = findSpecialStrings(params)
-    var sparams = ReaperBase.dumpParams(params)
-    var res = '  '.repeat(indent) + token + sparams
+    const specialStrings = findSpecialStrings(params)
+    const sparams = ReaperBase.dumpParams(params)
+    let res = '  '.repeat(indent) + token + sparams
 
     res += dumpSpecialStrings(token, specialStrings, indent + 1)
 
