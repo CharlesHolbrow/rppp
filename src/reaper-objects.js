@@ -9,11 +9,9 @@ const { base64StringByteLength } = require('./base64')
 const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8')
 
 /**
- * @typedef {Object} ReaData
- * @property {string} token Reaper token such as VST, TRACK, or NAME
- * @property {Array} params ex. ["hi", 5000]
- * @property {ReaData[]} [contents] optional contents
+ * @typedef {import('./reaper-base.js').ReaData} ReaData
  */
+
 class ReaperProject extends ReaperBase {
   /**
    * @param {ReaData} obj

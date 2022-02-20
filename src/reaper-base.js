@@ -1,14 +1,37 @@
 /**
+ * @callback ToString
+ * @returns {string}
+ */
+
+/**
+ * @typedef {Object} Stringable
+ * @property {ToString} toString
+ */
+
+/**
+ * A interface for the Reaper object that can represent both:
+ * - structs (which have no .contents, or .b64Chunks)
+ * - objects (which do have .contents, and may have .b64Cjunks)
+ *
+ * Objects may be represented by instances of the ReaperBase class, while
+ * structs shouldn't be. This may change in the future.
+ *
+ * The ReaData type is suitable for passing in to the ReaperBase constructor
  * @typedef {Object} ReaData
  * @property {string} token Reaper token such as VST, TRACK, or NAME
- * @property {any[]} params ex. ["hi", 5000]]
- * @param {any[]} contents
- * @param {any[]} b64Chunks
+ * @property {any[]} [params=[]] ex. ["hi", 5000]]
+ * @property {ReaData[]} [contents=[]]
+ * @property {(string|Stringable)[]} [b64Chunks=[]] each element is a string or an
+ * object with a toString() method
  */
 
 const { splitBase64String } = require('./base64')
 
-// Base class for parsing objects that are not special.
+/**
+ * The parser will return ReaperBase instances for all objects it detects. It
+ * the consuming code may use rppp.specialize on these instances in order to
+ * access helper methods.
+ */
 class ReaperBase {
   /**
    * @param {ReaData} obj
@@ -20,16 +43,27 @@ class ReaperBase {
     if (!Array.isArray(contents)) throw new TypeError('ReaperBase .contents must be a Array')
     if (!Array.isArray(b64Chunks)) throw new TypeError('ReaperBase .b64Chunks must be a Array')
 
+    /**
+     * @member {string} token A .RPP token, for example: VST, TRACK, or NAME
+     */
     this.token = token
+
+    /**
+     * @member {any[]} params Strings or numbers that follow the token
+     */
     this.params = params
+
+    /**
+     * @member {(ReaperBase|ReaData)[]} contents All children as structured data
+     */
     this.contents = contents
 
     /**
-     * @member {string|object} b64Chunks[] Each item in the array will represent
-     * a b64 chunk. When an object has multiple chunks (VSTs have 3), each chunk
-     * will be stored as a single string even if it's textual representation
-     * spans multiple lines. The dump method is responsible for splitting up
-     * long b64 strings.
+     * @member {(string|Stringable)[]} b64Chunks[] Each item in the array will
+     * represent a b64 chunk. When an object has multiple chunks (VSTs have 3),
+     * each chunk will be stored as a single string even if it's textual
+     * representation spans multiple lines. The dump method is responsible for
+     * splitting up long b64 strings.
      *
      * IMPORTANT: Any objects in .b64Chunks MUST have a .toString() method.
      */
