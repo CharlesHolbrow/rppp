@@ -205,8 +205,8 @@ describe('test-parser.js', function () {
               { token: 'HASDATA', params: [1, 960, 'QN'] },
               { token: 'CCINTERP', params: [32] },
               { token: 'POOLEDEVTS', params: ['{10F9B930-32BF-604C-86D1-B6819C2E6F41}'] },
-              { token: 'E', params: [0, 90, '3c', 60] },
-              { token: 'E', params: [480, 80, '3c', '00'] },
+              { token: 'E', params: [0, '90', '3c', '60'] },
+              { token: 'E', params: [480, '80', '3c', '00'] },
               { token: 'E', params: [0, 'b0', '7b', '00'] }
             ]
           })

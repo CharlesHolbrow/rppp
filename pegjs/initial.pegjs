@@ -26,7 +26,8 @@ struct = (white* token_1:token params:params crlf start token_2:token crlf pipe_
   params[0] = pipe_string; 
   return {token: token_1, params};
 })
-
+/ (white* result:MIDI_EVENT crlf? { return result })
+/ (white* result:MIDI_EVENT_X crlf? { return result })
 /*
 example struct `ONE "hello" 1`
 */
@@ -54,14 +55,39 @@ CFG = token:cfg_token params:params crlf b64Chunks:b64* {
 // Add CFG object that contain base64 content to `cfg`:
 cfg_token = "RECORD_CFG" / "APPLYFX_CFG" / "RENDER_CFG"
 
+/**
+It appears that all MIDI messages have 3 hex bytes, even messages (like f3 AKA
+"Song Select") that only have one data byte. See Schwa's post about the MIDI
+format format and the prequantized offset values that neccecitate the optional
+parameters: https://forums.cockos.com/showpost.php?p=436229&postcount=2
+*/
+MIDI_EVENT = token:("E" / "e" / "Em" / "em") midiParams:(param_int param_hex param_hex param_hex) optionalParams:params {
+  return { token, params: midiParams.concat(optionalParams) }
+}
+MIDI_EVENT_X = token:("X" / "x" / "Xm" / "xm") midiParams:(param_int param_int param_hex param_hex param_hex) optionalParams:params {
+  return { token, params: midiParams.concat(optionalParams) }
+}
+
 /*
 Parameters are everything after the token.
        token <- | -> params
 `<REAPER_PROJECT 0.1 "6.13/OSX64" 1596463823`
 This rule expects every param to be preceeded by a space
 */
-param  "param"  = space p:(decimal !char_nosp / int !char_nosp / string !char_nosp)  { return p[0]; }
+param_string    = space p:(string !char_nosp) { return p[0]; }
+param_int       = space p:(int !char_nosp) { return p[0]; }
+param_decimal   = space p:(decimal !char_nosp) { return p[0]; }
+param "param"   = param_decimal / param_int / param_string
 params "params" = param*
+
+/**
+Note that we do not include hex in the normal params. I've never seen it used
+outside of a MIDI event, so we don't want to be invoking it for any parameter
+that looks like it could be a hex value. Remember that all positive integers are
+also value hex values, so there would be no way of automatically identifying any
+parameters that should be parsed as hex values.
+*/
+param_hex       = space p:(hex !char_nosp) { return p[0]; }
 
 /*
 Some parameters span multiple lines
@@ -91,7 +117,9 @@ char            = [a-zA-Z 0-9!.,:@#$%^&*(){}<>[\]_+/="'|`-]
 
 /* */
 decimal = txt:$(int "." digit*) { return parseFloat(txt); }
+// int     = txt:$("-"? digit+) { return parseInt(txt); }
 int     = txt:$("0" / ("-"? [1-9] digit*)) { return parseInt(txt); }
+hex     = chars:[0-9a-fA-F]+ { return chars.join('') }
 digit   = [0-9]
 space   = " "
 white   = space / "\t"
