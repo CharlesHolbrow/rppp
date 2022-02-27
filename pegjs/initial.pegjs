@@ -117,8 +117,7 @@ char            = [a-zA-Z 0-9!.,:@#$%^&*(){}<>[\]_+/="'|`-]
 
 /* */
 decimal = txt:$(int "." digit*) { return parseFloat(txt); }
-// int     = txt:$("-"? digit+) { return parseInt(txt); }
-int     = txt:$("0" / ("-"? [1-9] digit*)) { return parseInt(txt); }
+int     = txt:$("-"? digit+) { return parseInt(txt); }
 hex     = chars:[0-9a-fA-F]+ { return chars.join('') }
 digit   = [0-9]
 space   = " "
