@@ -14,7 +14,7 @@ const emptys = fs.readFileSync(path.join(__dirname, '../data/empty.RPP'), 'utf8'
 
 class ReaperProject extends ReaperBase {
   /**
-   * @param {ReaData} obj
+   * @param {ReaData} [obj]
    */
   constructor (obj) {
     if (obj) super(obj)
@@ -35,7 +35,7 @@ class ReaperProject extends ReaperBase {
 
 class ReaperTrack extends ReaperBase {
   /**
-   * @param {ReaData} obj
+   * @param {ReaData} [obj]
    */
   constructor (obj) {
     if (!obj) {
@@ -185,7 +185,7 @@ class ReaperItem extends ReaperBase {
 
 class ReaperSource extends ReaperBase {
   /**
-   * @param {ReaData} obj
+   * @param {ReaData} [obj]
    */
   constructor (obj) {
     if (!obj) {
@@ -442,7 +442,7 @@ class ReaperSource extends ReaperBase {
 
 class ReaperFXChain extends ReaperBase {
   /**
-   * @param {ReaData} obj
+   * @param {ReaData} [obj]
    */
   constructor (obj) {
     if (!obj) {
@@ -499,7 +499,7 @@ class ReaperFXChain extends ReaperBase {
 
 class ReaperVst extends ReaperBase {
   /**
-   * @param {ReaData} obj
+   * @param {ReaData} [obj]
    */
   constructor (obj) {
     if (!obj) obj = parser.parse('<VST\n>')
