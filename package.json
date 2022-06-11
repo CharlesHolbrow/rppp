@@ -16,7 +16,7 @@
   "author": "",
   "license": "UNLICENSED",
   "devDependencies": {
-    "mocha": "^8.4.0",
+    "mocha": "^10.0.0",
     "pegjs": "^0.10.0",
     "should": "^13.2.3",
     "standard": "^16.0.4",
