@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 require('mocha')
-require('should')
+const should = require('should')
 const parser = require('../src/parser-debug')
 
 const rppTrackItemStringModified = `<ITEM
@@ -26,13 +26,43 @@ const rppTrackItemStringModified = `<ITEM
   >
 >`
 
+const rppTrackItemNumberName = `<ITEM
+  POSITION 1.25777827441979
+  SNAPOFFS 0
+  LENGTH 0.6288891372099
+  LOOP 0
+  ALLTAKES 0
+  FADEIN 1 0 0 1 0 0 0
+  FADEOUT 1 0 0 1 0 0 0
+  MUTE 0 0
+  SEL 0
+  IGUID {EC7D9D45-D00D-994F-BF28-2E45B5A268A6}
+  IID 2
+  NAME 3
+  VOLPAN 1 0 1 -1
+  SOFFS 1.42360538789619
+  PLAYRATE 1 0 0 -1 0 0.0025
+  CHANMODE 0
+  GUID {E485D319-595A-EB4B-976C-3365529ECD72}
+  <SOURCE WAVE
+    FILE "marvin-gaye-whats-happening-brother.wav"
+  >
+>`
+
 describe('test-parser-item.js', function () {
   const base = parser.parse(rppTrackItemStringModified)
 
   describe('NAME', function () {
-    const [name] = base.getStructByToken('NAME').params
+    const [firstParam] = base.getStructByToken('NAME').params
     it('should parse the correct name value', function () {
-      name.should.equal('-6db')
+      firstParam.should.equal('-6db')
+    })
+
+    it('should return strings even when argument is a valid number', function () {
+      const itemWithNumberName = parser.parse(rppTrackItemNumberName)
+      const [firstParam] = itemWithNumberName.getStructByToken('NAME').params
+      should(firstParam).be.a.String()
+      should(firstParam).equal('3')
     })
   })
 

@@ -28,10 +28,12 @@ struct = (white* token_1:token params:params crlf start token_2:token crlf pipe_
 })
 / (white* result:MIDI_EVENT crlf? { return result })
 / (white* result:MIDI_EVENT_X crlf? { return result })
+/ (white* result:NAME crlf? { return result })
 /*
 example struct `ONE "hello" 1`
 */
 / (white* token:token params:params crlf? { return { token, params }; } )
+
 
 
 /*
@@ -66,6 +68,15 @@ MIDI_EVENT = token:("E" / "e" / "Em" / "em") midiParams:(param_int param_hex par
 }
 MIDI_EVENT_X = token:("X" / "x" / "Xm" / "xm") midiParams:(param_int param_int param_hex param_hex param_hex) optionalParams:params {
   return { token, params: midiParams.concat(optionalParams) }
+}
+
+/**
+We want to parse NAMEs as strings even in the case when they look like a number,
+such as '1'. I do know know if NAME structs ever have more than one parameter,
+so I am not enforcding optional parameter types.
+*/
+NAME = token:"NAME" firstParam:param_string optionalParams:params {
+  return { token, params: [firstParam].concat(optionalParams) }
 }
 
 /*
