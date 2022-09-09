@@ -64,6 +64,25 @@ describe('test-parser.js', function () {
         ]
       }))
     })
+
+    it('should parse JSFX', function() {
+      const rpp = `
+        <JS "foo.jsfx" ""
+          42 42.0 42 - - - - - "Preset - Name"
+        >
+      `.trim()
+      console.log(parse(rpp).dump())
+    })
+
+    // currently errors
+    it('should parse leading decimals', function() {
+      const rpp = `
+        <JS "foo.jsfx" ""
+          42.0 42.0 42 - - - - - "Preset - Name"
+        >
+      `.trim()
+      console.log(parse(rpp).dump())
+    })
   }) // Describe object Rule
 
   describe('int rule', function () {
