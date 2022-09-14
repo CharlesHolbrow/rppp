@@ -108,6 +108,11 @@ describe('test-parser.js', function () {
     it(`should parse "${t04}" as an empty string and a string that starts with an integer`, function () {
       parse(t04).should.deepEqual(['', '1234{}'])
     })
+
+    const t05 = ' okʌ'
+    it(`should parse "${t05}" which contains a speciffic unicode char`, function () {
+      parse(t05).should.deepEqual(['okʌ'])
+    })
   }) // describe params
 
   describe('string rule', function () {
