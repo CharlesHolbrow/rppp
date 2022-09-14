@@ -124,8 +124,9 @@ char_nodq       = !'"' c:char { return c }
 char_nobt       = !'`' c:char { return c }
 char_nosq       = !"'" c:char { return c }
 char_nosp       = !' ' c:char { return c }
-char            = [a-zA-Z 0-9!.,:@#$%^&*(){}<>[\]_+/="'|`-] / uc_001
+char            = [a-zA-Z 0-9!.,:@#$%^&*(){}<>[\]_+/="'|`-] / uc_001 / uc_002
 uc_001          = '\u028c' { return 'ʌ' }
+uc_002          = '\u026a' { return 'ɪ' }
 
 /* */
 decimal = txt:$(int "." digit*) { return parseFloat(txt); }
