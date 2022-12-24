@@ -148,7 +148,7 @@ b64 = fullLines:b64_full_line* lastLine: b64_short_line {
 }
 
 b64_short_line = line:b_line & { // every b64 chunk ends with a short line
-  return line.length < 128
+  return line.length < 128 || line.endsWith('=')
 } { return line }
 
 b64_full_line = line:b_line & {
