@@ -9,7 +9,16 @@ const ReaperBase = require('./reaper-base')
  * @returns {(import('./reaper-base').ReaData|ReaperBase)}
  */
 function parse (rppString) {
-  return parser.parse(rppString)
+  try {
+    return parser.parse(rppString)
+  } catch (err) {
+    const {start, end} = err.location,
+      lines = rppString.split(/\r?\n/ig).map(l => '    ' + l)
+    err.nearLines = lines.slice(start.line - 4, start.line - 1)
+      .concat(['==> ' + lines[start.line - 1].substring(4)])
+      .concat(lines.slice(start.line, end.line + 4))
+    throw err
+  }
 }
 
 /**
