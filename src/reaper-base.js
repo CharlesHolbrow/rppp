@@ -167,26 +167,14 @@ class ReaperBase {
 
   dumpJsfxData (indent = 0) {
     let body = ''
-    let line = ''
     if (this.jsfxData.length) {
       const strings = this.jsfxData.map(value => {
-        if (typeof value === 'string') return value
+        if (typeof value === 'string') return ReaperBase.dumpString(value)
         if (value === null) return '-'
         return value.toString()
       })
 
-      // add all parameters
-      for (const str of strings) {
-        if (line.length + str.length > 128) {
-          body += (line + '\n')
-          line = ''
-        }
-
-        if (line.length === 0) line = '  '.repeat(indent) + str
-        else line += (' ' + ReaperBase.dumpString(str))
-      }
-
-      body += (line + '\n')
+      body = '  '.repeat(indent) + strings.join(' ') + '\n'
     }
 
     return body

@@ -332,7 +332,7 @@ describe('dump', function () {
         token: 'JS',
         params: ['foo.jsfx', ''],
         jsfxData: [42, 42, 42.5, null, null, 'Preset - Name']
-      }).dump().should.deepEqual('<JS "foo.jsfx" ""\n  42 42 42.5 - - "Preset - Name"\n>')
+      }).dump().should.deepEqual('<JS foo.jsfx ""\n  42 42 42.5 - - "Preset - Name"\n>')
     })
 
     it('should dump and re-parse jsfx objects without loosing information', function () {
