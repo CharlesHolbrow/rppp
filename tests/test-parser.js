@@ -64,6 +64,24 @@ describe('test-parser.js', function () {
         ]
       }))
     })
+
+    it('should parse JSFX', function () {
+      const rpp = '<JS foo.jsfx ""\n  42 42.0 42.5 - - - - - "Preset - Name"\n>'
+      parse(rpp).should.deepEqual(new ReaperBase({
+        token: 'JS',
+        params: ['foo.jsfx', ''],
+        jsfxData: [42, 42, 42.5, null, null, null, null, null, 'Preset - Name']
+      }))
+    })
+
+    it('should parse JSFX with leading decimals', function () {
+      const rpp = '<JS foo.jsfx ""\n  42.0 42.0 42 - - - - - "Preset - Name"\n>'
+      parse(rpp).should.deepEqual(new ReaperBase({
+        token: 'JS',
+        params: ['foo.jsfx', ''],
+        jsfxData: [42, 42, 42, null, null, null, null, null, 'Preset - Name']
+      }))
+    })
   }) // Describe object Rule
 
   describe('int rule', function () {
@@ -124,7 +142,7 @@ describe('test-parser.js', function () {
       parse('""').should.equal('')
     })
 
-    it('should uandle unquoted strings (strings that do not start w/ a space, quote, or backtick)', () => {
+    it('should handle unquoted strings (strings that do not start w/ a space, quote, or backtick)', () => {
       parse('aString').should.equal('aString')
       parse('hel"lo').should.equal('hel"lo')
       parse('hello"').should.equal('hello"')
@@ -143,6 +161,14 @@ describe('test-parser.js', function () {
       parse('`"`').should.equal('"')
     })
   }) // describe string rule
+
+  describe('jsfx line rule', function () {
+    const parse = input => parser.parse(input, { startRule: 'js_data' })
+
+    it('should handle lines that start with a decimal', function () {
+      parse('  42.0 42.0 42 - - "Preset - Name"\n').should.deepEqual([42, 42, 42, null, null, 'Preset - Name'])
+    })
+  })
 
   describe('multiline parameters', function () {
     // To use a custom 'startRule', you must add it to the gen-debug npm script

@@ -42,7 +42,11 @@ Three example tokens: REAPER_PROJECT RIPPLE GROUPOVERRIDE
 */
 token "token" = chars:[A-Z_0-9]+ { return chars.join(''); }
 
-multiline_objects = NOTES / VST / CFG
+multiline_objects = NOTES / VST / CFG / JS
+JS = "JS" params: params crlf jsfxData:js_data
+{
+  return new ReaperBase({ token: "JS", params, jsfxData });
+}
 VST = "VST" params: params crlf vstA:b64 vstB:b64 vstC:b64
 { 
   const b64Chunks = [vstA, vstB, vstC]
@@ -160,3 +164,10 @@ b_line = white* chars:b* e1:'='?  e2:'='?  crlf {
 }
 
 b = $[a-zA-Z0-9+\/]
+
+/*
+JSFX effects
+*/
+js_dash = "-" {return null}
+js_arg = arg:(decimal / int / js_dash / string) (space / crlf) { return arg; }
+js_data = white* lines:js_arg* { return [...lines]; }

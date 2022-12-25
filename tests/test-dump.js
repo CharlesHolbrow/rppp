@@ -2,6 +2,7 @@
 require('mocha')
 require('should')
 
+const { parse } = require('../src/parser')
 const ReaperBase = require('../src/reaper-base')
 const {
   ReaperVst,
@@ -324,6 +325,24 @@ describe('dump', function () {
   ZURhdGEAAQFCeXBhc3MAAQEDAB0AAAAAAAAASlVDRVByaXZhdGVEYXRhAAAAAAAAAAA=
   AEZhY3RvcnkgUHJlc2V0czogRmFjdG9yeSBEZWZhdWx0ABAAAAA=
 >`)
+    })
+
+    it('should dump jsfx objects', function () {
+      new ReaperBase({
+        token: 'JS',
+        params: ['foo.jsfx', ''],
+        jsfxData: [42, 42, 42.5, null, null, 'Preset - Name']
+      }).dump().should.deepEqual('<JS "foo.jsfx" ""\n  42 42 42.5 - - "Preset - Name"\n>')
+    })
+
+    it('should dump and re-parse jsfx objects without loosing information', function () {
+      const rpp1 = new ReaperBase({
+        token: 'JS',
+        params: ['foo.jsfx', ''],
+        jsfxData: [42, 42.0, 42.5, null, null, 'Preset - Name']
+      })
+      const rpp2 = parse(rpp1.dump())
+      rpp1.should.deepEqual(rpp2)
     })
   }) // describe multiline parameters rule
 }) // describe dump

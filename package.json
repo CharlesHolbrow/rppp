@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha ./tests",
     "test-b64": "npm run gen && mocha ./tests/test-base64",
-    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params,b64 pegjs/initial.pegjs",
+    "gen-debug": "pegjs -o src/parser-debug.js --allowed-start-rules object,string,decimal,int,param,params,b64,js_data pegjs/initial.pegjs",
     "gen-release": "pegjs -o src/parser.js pegjs/initial.pegjs",
     "gen-types": "tsc 'src/index.js' --declaration --allowJs --emitDeclarationOnly --outDir types",
     "gen": "npm run gen-debug && npm run gen-release && npm run gen-types",

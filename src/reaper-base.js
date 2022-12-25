@@ -10,8 +10,8 @@
 
 /**
  * A interface for the Reaper object that can represent both:
- * - structs (which have no .contents, or .b64Chunks)
- * - objects (which do have .contents, and may have .b64Cjunks)
+ * - structs (which have no .contents, .b64Chunks, or .jsfxData)
+ * - objects (which do have .contents, and may have .b64Chunks or .jsfxData)
  *
  * Objects may be represented by instances of the ReaperBase class, while
  * structs shouldn't be. This may change in the future.
@@ -23,6 +23,7 @@
  * @property {(ReaData|ReaperBase)[]} [contents=[]]
  * @property {(string|Stringable)[]} [b64Chunks=[]] each element is a string or an
  * object with a toString() method
+ * @property {(number|string)[]} [jsfxData=[]] ex. [42, "hi", "okay"]
  */
 
 const { splitBase64String } = require('./base64')
@@ -36,7 +37,7 @@ class ReaperBase {
   /**
    * @param {ReaData} obj
    */
-  constructor ({ token, params = [], contents = [], b64Chunks = [] } = {}) {
+  constructor ({ token, params = [], contents = [], b64Chunks = [], jsfxData = [] } = {}) {
     if (!token) throw new TypeError('ReaperBase needs a .token string')
     if (typeof token !== 'string') throw new TypeError('ReaperBase .token must be a string')
     if (!Array.isArray(params)) throw new TypeError('ReaperBase .params must be an Array')
@@ -68,6 +69,11 @@ class ReaperBase {
      * IMPORTANT: Any objects in .b64Chunks MUST have a .toString() method.
      */
     this.b64Chunks = b64Chunks
+
+    /**
+     * @member {(number|string)[]} jsfxData Strings or numbers that follow the token
+     */
+    this.jsfxData = jsfxData
   }
 
   /**
@@ -137,6 +143,7 @@ class ReaperBase {
     }
 
     body += this.dumpB64Chunks(indent + 1)
+    body += this.dumpJsfxData(indent + 1)
 
     const end = '  '.repeat(indent) + '>'
     return start + body + end
@@ -153,6 +160,33 @@ class ReaperBase {
         .flat()
 
       body += indentStr + b64Lines.join('\n' + indentStr) + '\n'
+    }
+
+    return body
+  }
+
+  dumpJsfxData (indent = 0) {
+    let body = ''
+    let line = ''
+    if (this.jsfxData.length) {
+      const strings = this.jsfxData.map(value => {
+        if (typeof value === 'string') return value
+        if (value === null) return '-'
+        return value.toString()
+      })
+
+      // add all parameters
+      for (const str of strings) {
+        if (line.length + str.length > 128) {
+          body += (line + '\n')
+          line = ''
+        }
+
+        if (line.length === 0) line = '  '.repeat(indent) + str
+        else line += (' ' + ReaperBase.dumpString(str))
+      }
+
+      body += (line + '\n')
     }
 
     return body
